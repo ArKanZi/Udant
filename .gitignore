@@ -1,0 +1,31 @@
+# Gradle files
+.gradle/
+build/
+
+# Documentation
+**/docs/
+
+# AI context
+AGENTS.md
+
+# Android Studio generated files and folders
+captures/
+*.aab
+*.apk
+output-metadata.json
+
+# IntelliJ
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+
+# Log/OS Files
+*.log
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+#tree
+project_tree.txt
