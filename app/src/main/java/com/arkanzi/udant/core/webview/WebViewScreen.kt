@@ -18,6 +18,7 @@ fun WebViewScreen(
     val webView = remember { WebViewProvider().create(context = context, config = config) }
     LaunchedEffect(url) {
         webView.loadUrl(url)
+
     }
     BackHandler {
         if (webView.canGoBack()) {

@@ -3,6 +3,7 @@ package com.arkanzi.udant.feature.saved.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arkanzi.udant.core.model.Article
+import com.arkanzi.udant.feature.archive.manager.ArchiveManager
 import com.arkanzi.udant.feature.saved.repository.SavedArticleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +15,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SavedArticleViewModel @Inject constructor(
 
-    private val repository: SavedArticleRepository
+    private val repository: SavedArticleRepository,
+    private val archiveManager: ArchiveManager
 
 ) : ViewModel() {
 
@@ -78,6 +80,18 @@ class SavedArticleViewModel @Inject constructor(
             repository.removeSavedArticle(
                 articleUrl = articleUrl
             )
+        }
+    }
+
+    fun archive(articleId:Long){
+     viewModelScope.launch {
+         archiveManager.archive(articleId)
+     }
+    }
+
+    fun deleteArchive(articleId: Long){
+        viewModelScope.launch {
+            archiveManager.deleteArchive(articleId)
         }
     }
 

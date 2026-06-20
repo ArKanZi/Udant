@@ -28,6 +28,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -41,6 +42,11 @@ android {
 }
 
 dependencies {
+    //dataStore
+    implementation(libs.androidx.datastore.preferences)
+
+    implementation(libs.androidx.documentfile)
+
     //serialization
     implementation(libs.kotlinx.serialization.core)
 

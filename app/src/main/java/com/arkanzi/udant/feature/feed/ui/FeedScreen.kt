@@ -44,7 +44,6 @@ import com.arkanzi.udant.core.model.Article
 import com.arkanzi.udant.core.navigation.Navigator
 import com.arkanzi.udant.core.ui.theme.UdantTheme
 import com.arkanzi.udant.feature.feed.viewmodel.FeedViewModel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 @Composable

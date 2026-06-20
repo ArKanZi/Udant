@@ -3,6 +3,7 @@ package com.arkanzi.udant.core.database.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.arkanzi.udant.core.model.ArchiveStatus
 
 @Entity(
     tableName = "saved_articles",
@@ -34,5 +35,9 @@ data class SavedArticleEntity(
 
     val category: String,
 
-    val savedAt: Long
+    val savedAt: Long,
+
+    val archiveStatus: ArchiveStatus,
+
+    val archiveUri: String?
 )

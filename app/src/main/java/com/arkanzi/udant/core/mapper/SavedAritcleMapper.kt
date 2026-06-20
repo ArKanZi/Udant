@@ -15,7 +15,9 @@ fun SavedArticleEntity.toArticle(): Article {
         articleUrl = articleUrl,
         publishedAt = publishedAt,
         category = category,
-        savedAt = savedAt
+        savedAt = savedAt,
+        archiveStatus = archiveStatus,
+        archiveUri = archiveUri
     )
 }
 
@@ -30,7 +32,9 @@ fun Article.toSavedArticleEntity(): SavedArticleEntity {
         articleUrl = articleUrl,
         publishedAt = publishedAt,
         category = category,
-        savedAt = System.currentTimeMillis()
+        savedAt = System.currentTimeMillis(),
+        archiveStatus = archiveStatus,
+        archiveUri = archiveUri
     )
 }
 

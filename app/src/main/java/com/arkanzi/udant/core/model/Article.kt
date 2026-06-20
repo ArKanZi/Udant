@@ -20,5 +20,10 @@ data class Article(
 
     val category: String = "Default",
 
-    val savedAt: Long? = null
+    val savedAt: Long? = null,
+
+    val archiveStatus: ArchiveStatus =
+        ArchiveStatus.NOT_ARCHIVED,
+
+    val archiveUri: String? = null
 )
