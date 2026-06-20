@@ -1,17 +1,20 @@
 # Udant
 
-Udant is an offline-first Android news and article reader designed to aggregate content from multiple sources into a single, distraction-free feed.
+Udant is an Android news and article reader focused on content ownership, offline access, and a distraction-free reading experience.
 
-The project focuses on local-first architecture, smooth reading experience, and long-term extensibility. Articles are cached locally, allowing users to continue reading even when network connectivity is unavailable.
+The application aggregates articles into a unified feed while keeping user data local. Articles can be saved and archived for long-term offline access, allowing readers to preserve content beyond the lifecycle of the original web page.
 
 ## Features
 
-* Offline-first article reading
-* Multi-source feed aggregation
+* Feed-based article discovery
 * Infinite feed loading
 * Local article caching with Room
-* Saved articles for later reading
-* Feed session management
+* Saved articles
+* Full article archiving (MHT)
+* Offline article reading
+* Archive management (create, open, delete)
+* Archive status tracking
+* Archive notifications
 * Automatic article enrichment
 * Modern Jetpack Compose UI
 * MVVM architecture
@@ -26,8 +29,12 @@ The project focuses on local-first architecture, smooth reading experience, and 
 * Hilt
 * Kotlin Coroutines
 * StateFlow
-* Coil
-* RSS Feed Integration
+* OkHttp
+* Jsoup
+* Rome RSS Parser
+* Android Storage Access Framework (SAF)
+* Android Foreground Services
+* WebView Archiving
 
 ## Architecture
 
@@ -38,11 +45,11 @@ UI (Compose)
     ↓
 ViewModel
     ↓
-Repository
+Manager / Repository
     ↓
-DAO
+DAO / Services
     ↓
-Room Database
+Room Database & Local Storage
 ```
 
 ### Responsibilities
@@ -50,22 +57,31 @@ Room Database
 **ViewModel**
 
 * Manages UI state
-* Handles feed session state
 * Coordinates user actions
+* Exposes reactive application state
 
 **Repository**
 
-* Fetches articles from remote sources
-* Coordinates data transformations
-* Handles caching and enrichment
+* Handles data access
+* Coordinates caching and persistence
+* Provides application data to ViewModels
+
+**Manager**
+
+* Coordinates multi-step workflows
+* Handles archive operations and business logic
 
 **DAO**
 
 * Provides local database access
 
+**Services**
+
+* Executes long-running background tasks
+
 ## Current Status
 
-### Phase 1 - MVP Stabilization ✅
+### Phase 1 - MVP Stabilization ✅ Completed
 
 Completed:
 
@@ -73,31 +89,76 @@ Completed:
 * Feed refresh
 * Infinite loading
 * Saved articles
-* Offline caching
-* Rotation handling
+* Local caching
 * Feed session management
 * Error handling improvements
 * Lifecycle stability fixes
 
-### Planned Features
+### Phase 2 - Offline Reading System ✅ Completed
 
-* Search
-* Categories
-* Multiple feed source types
+Completed:
 
-  * RSS
-  * APIs
-  * Web scraping
-* Improved enrichment pipeline
-* Reader customization
-* Extensions system
-* Advanced feed filtering
+* Article archiving (MHT)
+* Offline reading support
+* Archive management (create, open, delete)
+* Archive status tracking
+* Archive notifications
+* Archive storage location selection
+* SAF integration
+* Persisted storage permissions
+* Archive lifecycle management
+
+### Current Focus
+
+### Phase 2.5 - Feature Completion & Reliability 🚧
+
+In Progress:
+
+* Advanced notifications
+* Notification grouping and actions
+* Archive reliability improvements
+* Archive state recovery
+* Edge-case handling
+* Archive lifecycle validation
+
+## Roadmap
+
+### Phase 3
+
+* Theme settings
+* UI/UX improvements
+* Reader preferences
+* Archive preferences
+
+### Phase 4
+
+* Architecture hardening
+* Reliability improvements
+
+### Phase 4.5
+
+* Performance validation
+* ANR prevention
+* Memory and database optimization
+
+### Phase 5
+
+* Source platform
+* Extension architecture
+* Source abstraction layer
+
+### Phase 5.5
+
+* Scaling and operational stability
+* Multi-source stress testing
+* Resource management
 
 ## Project Goals
 
 Udant aims to provide:
 
-* A local-first reading experience
+* Local-first content ownership
+* Reliable offline reading
 * Source independence
 * Fast article access
 * Long-term extensibility
