@@ -85,7 +85,7 @@ class SavedArticleViewModel @Inject constructor(
 
     fun archive(articleId:Long){
      viewModelScope.launch {
-         archiveManager.archive(articleId)
+         archiveManager.processArchive(articleId)
      }
     }
 

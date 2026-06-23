@@ -37,11 +37,11 @@ class NotificationController @Inject constructor(
         )
     }
 
-    fun showArchiveFailed() {
+    fun showArchiveFailed(error: Throwable) {
         notificationManager.notify(
             NotificationChannels.ARCHIVE_STATUS_ID,
             notificationHelper.createArchiveNotification(
-                contentText = "Failed to Archive Article",
+                contentText = error.toString(),
                 setOngoing = false
             )
         )

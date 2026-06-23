@@ -7,10 +7,14 @@ import androidx.core.net.toUri
 import com.arkanzi.udant.core.model.ArchiveStatus
 import com.arkanzi.udant.core.notification.NotificationController
 import com.arkanzi.udant.core.storage.StorageManager
+import com.arkanzi.udant.feature.archive.model.ArchiveServiceResult
+import com.arkanzi.udant.feature.archive.model.ArchiveUpdate
 import com.arkanzi.udant.feature.archive.repository.ArchiveRepository
 import com.arkanzi.udant.feature.archive.service.ArchiveService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,7 +32,7 @@ class ArchiveManager @Inject constructor(
 
 ) {
 
-    suspend fun archive(
+    suspend fun processArchive(
         savedArticleId: Long
     ): Result<Unit> {
 
@@ -83,8 +87,8 @@ class ArchiveManager @Inject constructor(
             else -> Unit
         }
 
-        archiveRepository.setQueued(
-            savedArticleId
+        handleArchiveStatus(
+            ArchiveUpdate.Queued(savedArticleId)
         )
         notificationController.showArchiveQueued()
 
@@ -95,10 +99,9 @@ class ArchiveManager @Inject constructor(
                 ArchiveService::class.java
             ).apply {
 
-                putExtra(
-                    "saved_article_id",
-                    savedArticleId
-                )
+                putExtra("article_id", article.savedArticleId)
+                putExtra("article_title", article.title)
+                putExtra("article_url", article.articleUrl)
             }
 
         ContextCompat.startForegroundService(
@@ -144,4 +147,93 @@ class ArchiveManager @Inject constructor(
             )
         }
     }
+
+    suspend fun onArchiveServiceResult(result: ArchiveServiceResult) {
+        when (result) {
+            is ArchiveServiceResult.Success -> {
+                finalizeArchive(result)
+            }
+
+            is ArchiveServiceResult.Failure -> {
+                handleArchiveFailure(result)
+            }
+        }
+    }
+
+    private suspend fun finalizeArchive(result: ArchiveServiceResult.Success) = withContext(
+        Dispatchers.IO
+    ) {
+
+        val safFolderUri = archiveRepository.getArchiveFolderUri().firstOrNull()
+
+        try {
+            val file =
+                storageManager.createFileInSaf(
+                    safFolderUri?.toUri(),
+                    result.fileName,
+                    "message/rfc822"
+                )
+            if (file == null) {
+                handleArchiveFailure(
+                    ArchiveServiceResult.Failure(
+                        savedArticleId = result.savedArticleId,
+                        throwable = IllegalStateException("Null File")
+                    )
+                )
+                return@withContext
+            } else {
+                val status = storageManager
+                    .copyToSaf(
+                        localFile = result.localFile,
+                        destinationUri = file.uri
+                    )
+                if (status) {
+                    handleArchiveStatus(
+                        ArchiveUpdate.Completed(
+                            savedArticleId = result.savedArticleId,
+                            archiveUri = file.uri.toString()
+                        )
+                    )
+                    notificationController.showArchiveCompleted()
+                }else {
+                    handleArchiveFailure(
+                        ArchiveServiceResult.Failure(
+                            savedArticleId = result.savedArticleId,
+                            throwable = IllegalStateException(
+                                "copyToSaf failed"
+                            )
+                        )
+                    )
+                }
+            }
+
+            storageManager.deleteLocalFile(result.localFile)
+
+        } catch (e: Exception) {
+
+            handleArchiveFailure(
+                ArchiveServiceResult.Failure(
+                    savedArticleId = result.savedArticleId,
+                    throwable = e
+                )
+            )
+            return@withContext
+        }
+
+    }
+
+    private suspend fun handleArchiveFailure(result: ArchiveServiceResult.Failure) {
+        handleArchiveStatus(
+            ArchiveUpdate.Failed(result.savedArticleId)
+        )
+
+        notificationController.showArchiveFailed(result.throwable)
+
+    }
+
+    suspend fun handleArchiveStatus(update: ArchiveUpdate) {
+        archiveRepository.setStatus(update)
+    }
+
+
 }
