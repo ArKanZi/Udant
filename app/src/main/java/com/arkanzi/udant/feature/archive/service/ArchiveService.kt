@@ -9,6 +9,7 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.arkanzi.udant.core.database.entity.SavedArticleEntity
 import com.arkanzi.udant.core.notification.NotificationController
+import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.core.util.toSafeFileName
 import com.arkanzi.udant.core.webview.WebViewConfig
 import com.arkanzi.udant.core.webview.WebViewProvider
@@ -33,6 +34,9 @@ class ArchiveService : Service() {
     @Inject
     lateinit var archiveRepository:
             ArchiveRepository
+
+    @Inject
+    lateinit var storageManager: StorageManager
 
     private val serviceScope =
         CoroutineScope(
@@ -73,13 +77,14 @@ class ArchiveService : Service() {
 
 
         val webView =
-            WebViewProvider().create(context = applicationContext, config = WebViewConfig())
+            WebViewProvider()
+                .create(
+                    context = applicationContext,
+                    config = WebViewConfig()
+                )
 
-        val archivePath =
-            File(
-                filesDir,
-                "temp_archive.mht"
-            ).absolutePath
+        val archivePath = storageManager.getLocalFile("temp_archive.mht").absolutePath
+
 
         webView.webViewClient =
             object : WebViewClient() {
@@ -88,65 +93,24 @@ class ArchiveService : Service() {
                     view: WebView?,
                     url: String?
                 ) {
-                    Log.d(
-                        TAG,
-                        Thread.currentThread().name
-                    )
-
-                    Log.d(
-                        TAG,
-                        "Page finished loading: $url"
-                    )
 
                     view?.saveWebArchive(
                         archivePath,
                         false
                     ) { savedPath ->
 
-                        Log.d(
-                            TAG,
-                            Thread.currentThread().name
-                        )
-
-                        Log.d(
-                            TAG,
-                            "Archive saved: $savedPath"
-                        )
-
                         savedPath?.let { path ->
 
                             val tempFile = File(path)
 
-                            Log.d(
-                                TAG,
-                                "Exists = ${tempFile.exists()}"
-                            )
-
-                            Log.d(
-                                TAG,
-                                "Size = ${tempFile.length()}"
-                            )
-
                             try {
-
-                                val folder =
-                                    safFolderUri?.toUri()?.let {
-                                        DocumentFile.fromTreeUri(
-                                            this@ArchiveService,
-                                            it
-                                        )
-                                    }
-                                val fileName =
-                                    savedArticle.title
-                                        .toSafeFileName()
-
-                                val archiveFile =
-                                    folder?.createFile(
-                                        "message/rfc822",
-                                        "${fileName}.mht"
+                                val file =
+                                    storageManager.createFileInSaf(
+                                        safFolderUri?.toUri(),
+                                        savedArticle.title,
+                                        "message/rfc822"
                                     )
-
-                                if (archiveFile == null) {
+                                if (file == null) {
                                     serviceScope.launch {
                                         archiveRepository
                                             .setFailed(
@@ -154,40 +118,15 @@ class ArchiveService : Service() {
                                             )
                                         notificationController.showArchiveFailed()
                                     }
-
-                                    Log.e(
-                                        TAG,
-                                        "Failed to create archive file"
-                                    )
                                     stopSelf()
                                     return@let
                                 }
-
-                                archiveFile.uri.let { archiveUri ->
-
-                                    contentResolver
-                                        .openOutputStream(
-                                            archiveUri
+                                if (storageManager
+                                        .copyToSaf(
+                                            tempFile,
+                                            file.uri
                                         )
-                                        ?.use { output ->
-
-                                            tempFile
-                                                .inputStream()
-                                                .use { input ->
-                                                    Log.d(
-                                                        TAG,
-                                                        Thread.currentThread().name
-                                                    )
-                                                    input.copyTo(
-                                                        output
-                                                    )
-                                                }
-                                        }
-
-                                    Log.d(
-                                        TAG,
-                                        "Copied to SAF: $archiveUri"
-                                    )
+                                ) {
                                     serviceScope.launch {
 
                                         archiveRepository
@@ -196,7 +135,7 @@ class ArchiveService : Service() {
                                                     savedArticle.savedArticleId,
 
                                                 archiveUri =
-                                                    archiveUri.toString()
+                                                    file.uri.toString()
                                             )
                                         notificationController.showArchiveCompleted()
 
@@ -208,10 +147,10 @@ class ArchiveService : Service() {
                                         )
                                         stopSelf()
                                     }
+
                                 }
 
-                                val deleted =
-                                    tempFile.delete()
+                                val deleted = storageManager.deleteLocalFile(tempFile)
 
                                 Log.d(
                                     TAG,
