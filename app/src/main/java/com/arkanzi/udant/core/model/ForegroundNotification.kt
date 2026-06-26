@@ -4,5 +4,6 @@ import android.app.Notification
 
 data class ForegroundNotification(
     val notificationId: Int,
-    val notification: Notification
+    val notification: Notification,
+
 )

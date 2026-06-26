@@ -1,4 +1,4 @@
-package com.arkanzi.udant.feature.saved.repository
+package com.arkanzi.udant.feature.savedArticles.repository
 
 import com.arkanzi.udant.core.database.dao.SavedArticleDao
 import com.arkanzi.udant.core.mapper.toArticle
@@ -10,7 +10,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class SavedArticleRepository @Inject constructor(
+class SavedArticlesRepository @Inject constructor(
 
     private val savedArticleDao: SavedArticleDao
 

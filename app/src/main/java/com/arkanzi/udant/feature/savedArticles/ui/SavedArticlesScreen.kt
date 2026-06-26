@@ -1,4 +1,4 @@
-package com.arkanzi.udant.feature.saved.ui
+package com.arkanzi.udant.feature.savedArticles.ui
 
 
 import androidx.compose.foundation.background
@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.outlined.Archive
-import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -37,14 +36,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arkanzi.udant.core.model.ArchiveStatus
 import com.arkanzi.udant.core.model.Article
 import com.arkanzi.udant.core.navigation.Navigator
-import com.arkanzi.udant.feature.saved.viewmodel.SavedArticleViewModel
+import com.arkanzi.udant.feature.savedArticles.viewmodel.SavedArticlesViewModel
 
 @Composable
-fun SavedScreen(
+fun SavedArticlesScreen(
 
     modifier: Modifier = Modifier,
 
-    viewModel: SavedArticleViewModel = hiltViewModel(),
+    viewModel: SavedArticlesViewModel = hiltViewModel(),
 
     navigator: Navigator
 

@@ -3,15 +3,16 @@ package com.arkanzi.udant.feature.archive.service
 import android.app.Service
 import android.content.Intent
 import android.util.Log
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.arkanzi.udant.core.notification.NotificationController
 import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.core.webview.WebViewConfig
 import com.arkanzi.udant.core.webview.WebViewProvider
 import com.arkanzi.udant.feature.archive.manager.ArchiveManager
 import com.arkanzi.udant.feature.archive.model.ArchiveServiceResult
 import com.arkanzi.udant.feature.archive.model.ArchiveUpdate
+import com.arkanzi.udant.feature.archive.notification.ArchiveNotification
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,7 @@ import javax.inject.Inject
 class ArchiveService : Service() {
 
     @Inject
-    lateinit var notificationController: NotificationController
+    lateinit var archiveNotification: ArchiveNotification
 
     @Inject
     lateinit var archiveManager: ArchiveManager
@@ -45,8 +46,8 @@ class ArchiveService : Service() {
         super.onCreate()
 
         val foregroundNotification =
-            notificationController
-                .getArchiveForegroundNotification()
+            archiveNotification
+                .getForegroundNotification()
 
         startForeground(
             foregroundNotification.notificationId,
@@ -78,6 +79,20 @@ class ArchiveService : Service() {
                     context = applicationContext,
                     config = WebViewConfig()
                 )
+
+        webView.webChromeClient =
+            object : WebChromeClient() {
+
+                override fun onProgressChanged(
+                    view: WebView?,
+                    newProgress: Int
+                ) {
+                    archiveNotification.showArchiveProgress(
+                        text = "Loading webpage",
+                        progress = newProgress
+                    )
+                }
+            }
 
         val archivePath = storageManager.getLocalFile("temp_archive.mht").absolutePath
 

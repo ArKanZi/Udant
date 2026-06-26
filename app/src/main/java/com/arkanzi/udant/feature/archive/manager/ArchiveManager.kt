@@ -2,13 +2,14 @@ package com.arkanzi.udant.feature.archive.manager
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.arkanzi.udant.core.model.ArchiveStatus
-import com.arkanzi.udant.core.notification.NotificationController
 import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.feature.archive.model.ArchiveServiceResult
 import com.arkanzi.udant.feature.archive.model.ArchiveUpdate
+import com.arkanzi.udant.feature.archive.notification.ArchiveNotification
 import com.arkanzi.udant.feature.archive.repository.ArchiveRepository
 import com.arkanzi.udant.feature.archive.service.ArchiveService
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -21,12 +22,12 @@ import javax.inject.Singleton
 @Singleton
 class ArchiveManager @Inject constructor(
 
-    @ApplicationContext
+    @param:ApplicationContext
     private val context: Context,
 
     private val archiveRepository: ArchiveRepository,
 
-    private val notificationController: NotificationController,
+    private val archiveNotification: ArchiveNotification,
 
     private val storageManager: StorageManager
 
@@ -90,7 +91,7 @@ class ArchiveManager @Inject constructor(
         handleArchiveStatus(
             ArchiveUpdate.Queued(savedArticleId)
         )
-        notificationController.showArchiveQueued()
+        archiveNotification.showArchiveQueued()
 
 
         val intent =
@@ -149,6 +150,10 @@ class ArchiveManager @Inject constructor(
     }
 
     suspend fun onArchiveServiceResult(result: ArchiveServiceResult) {
+        archiveNotification.showArchiveProgress(
+            text = "Processing archive...",
+            indeterminate = true
+        )
         when (result) {
             is ArchiveServiceResult.Success -> {
                 finalizeArchive(result)
@@ -165,13 +170,17 @@ class ArchiveManager @Inject constructor(
     ) {
 
         val safFolderUri = archiveRepository.getArchiveFolderUri().firstOrNull()
+        archiveNotification.showArchiveProgress(
+            text = "Copying to storage",
+            indeterminate = true
+        )
 
         try {
             val file =
                 storageManager.createFileInSaf(
-                    safFolderUri?.toUri(),
-                    result.fileName,
-                    "message/rfc822"
+                    folderUri = safFolderUri?.toUri(),
+                    fileName =result.fileName,
+                    mimeType = "message/rfc822"
                 )
             if (file == null) {
                 handleArchiveFailure(
@@ -187,6 +196,7 @@ class ArchiveManager @Inject constructor(
                         localFile = result.localFile,
                         destinationUri = file.uri
                     )
+
                 if (status) {
                     handleArchiveStatus(
                         ArchiveUpdate.Completed(
@@ -194,7 +204,7 @@ class ArchiveManager @Inject constructor(
                             archiveUri = file.uri.toString()
                         )
                     )
-                    notificationController.showArchiveCompleted()
+                    archiveNotification.showArchiveCompleted()
                 }else {
                     handleArchiveFailure(
                         ArchiveServiceResult.Failure(
@@ -207,7 +217,10 @@ class ArchiveManager @Inject constructor(
                 }
             }
 
-            storageManager.deleteLocalFile(result.localFile)
+           val deleteStatus =  storageManager.deleteLocalFile(result.localFile)
+            if (!deleteStatus){
+                Log.e("Archive Manager","Failed to delete temporary archive: ${result.localFile}")
+            }
 
         } catch (e: Exception) {
 
@@ -227,7 +240,7 @@ class ArchiveManager @Inject constructor(
             ArchiveUpdate.Failed(result.savedArticleId)
         )
 
-        notificationController.showArchiveFailed(result.throwable)
+        archiveNotification.showArchiveFailed(result.throwable)
 
     }
 

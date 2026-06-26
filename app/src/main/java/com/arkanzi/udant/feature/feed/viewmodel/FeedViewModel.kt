@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.arkanzi.udant.core.model.Article
 import com.arkanzi.udant.feature.feed.model.FeedUiState
 import com.arkanzi.udant.feature.feed.repository.FeedRepository
-import com.arkanzi.udant.feature.saved.repository.SavedArticleRepository
+import com.arkanzi.udant.feature.savedArticles.repository.SavedArticlesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +19,7 @@ import javax.inject.Inject
 class FeedViewModel @Inject constructor(
 
     private val feedRepository: FeedRepository,
-    private val savedArticleRepository: SavedArticleRepository
+    private val savedArticleRepository: SavedArticlesRepository
 
 ) : ViewModel() {
 

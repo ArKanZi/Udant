@@ -10,7 +10,7 @@ import javax.inject.Singleton
 
 @Singleton
 class StorageManager @Inject constructor(
-    @ApplicationContext
+    @param:ApplicationContext
     private val context: Context
 ) {
     private fun getDocumentFile(fileUri: Uri?): DocumentFile? =
@@ -36,7 +36,7 @@ class StorageManager @Inject constructor(
 
         return folder.createFile(
             mimeType,
-            "$fileName.mht"
+            fileName
         )
     }
 
@@ -66,7 +66,7 @@ class StorageManager @Inject constructor(
                 }
             }
             return true
-        }catch (e: Exception){
+        }catch (_: Exception){
             return false
         }
     }

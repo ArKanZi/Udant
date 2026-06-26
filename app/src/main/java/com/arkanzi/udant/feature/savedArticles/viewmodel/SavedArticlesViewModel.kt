@@ -1,10 +1,10 @@
-package com.arkanzi.udant.feature.saved.viewmodel
+package com.arkanzi.udant.feature.savedArticles.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arkanzi.udant.core.model.Article
 import com.arkanzi.udant.feature.archive.manager.ArchiveManager
-import com.arkanzi.udant.feature.saved.repository.SavedArticleRepository
+import com.arkanzi.udant.feature.savedArticles.repository.SavedArticlesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,9 +13,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class SavedArticleViewModel @Inject constructor(
+class SavedArticlesViewModel @Inject constructor(
 
-    private val repository: SavedArticleRepository,
+    private val repository: SavedArticlesRepository,
     private val archiveManager: ArchiveManager
 
 ) : ViewModel() {

@@ -11,7 +11,7 @@ import okhttp3.Request
 import org.jsoup.Jsoup
 import javax.inject.Inject
 
-class RssFeedService @Inject constructor(
+class RssFeedDataSource @Inject constructor(
     private val client: OkHttpClient
 ) {
 

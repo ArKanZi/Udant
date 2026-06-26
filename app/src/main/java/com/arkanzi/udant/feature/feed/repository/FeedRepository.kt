@@ -6,7 +6,7 @@ import com.arkanzi.udant.core.mapper.toArticle
 import com.arkanzi.udant.core.mapper.toArticleEntities
 import com.arkanzi.udant.core.model.Article
 import com.arkanzi.udant.core.network.ArticleEnricher
-import com.arkanzi.udant.core.network.RssFeedService
+import com.arkanzi.udant.core.network.RssFeedDataSource
 import com.arkanzi.udant.feature.feed.data.source.toiFeedSources
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +22,7 @@ class FeedRepository @Inject constructor(
 
     private val articleDao: ArticleDao,
 
-    private val rssFeedService: RssFeedService,
+    private val rssFeedDataSource: RssFeedDataSource,
 
     private val articleEnricher: ArticleEnricher
 
@@ -99,7 +99,7 @@ class FeedRepository @Inject constructor(
 
         val source = feedSources[currentFeedIndex]
 
-        val articles = rssFeedService
+        val articles = rssFeedDataSource
             .fetchArticles(source.sourceUrl)
             .map { article ->
 
