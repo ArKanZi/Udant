@@ -14,7 +14,9 @@ The application aggregates articles into a unified feed while keeping user data 
 * Offline article reading
 * Archive management (create, open, delete)
 * Archive status tracking
-* Archive notifications
+* Archive progress notifications
+* Foreground archive service
+* Notification navigation to Saved Articles
 * Automatic article enrichment
 * Modern Jetpack Compose UI
 * MVVM architecture
@@ -34,7 +36,9 @@ The application aggregates articles into a unified feed while keeping user data 
 * Rome RSS Parser
 * Android Storage Access Framework (SAF)
 * Android Foreground Services
-* WebView Archiving
+* Android Notifications
+* PendingIntent
+* WebView
 
 ## Architecture
 
@@ -81,45 +85,49 @@ Room Database & Local Storage
 
 ## Current Status
 
-### Phase 1 - MVP Stabilization ✅ Completed
+### Phase 1 — MVP Stabilization ✅ Completed
 
 Completed:
 
 * Feed loading
 * Feed refresh
 * Infinite loading
-* Saved articles
 * Local caching
+* Saved articles
 * Feed session management
 * Error handling improvements
 * Lifecycle stability fixes
 
-### Phase 2 - Offline Reading System ✅ Completed
+### Phase 2 — Offline Reading System ✅ Completed
 
 Completed:
 
 * Article archiving (MHT)
-* Offline reading support
+* Offline article reading
 * Archive management (create, open, delete)
 * Archive status tracking
-* Archive notifications
 * Archive storage location selection
 * SAF integration
 * Persisted storage permissions
 * Archive lifecycle management
 
-### Current Focus
+### Phase 2.5 — Feature Completion & Reliability 🚧 In Progress
 
-### Phase 2.5 - Feature Completion & Reliability 🚧
+Completed:
+
+* Generic notification architecture
+* Notification controller layer
+* Archive-specific notification layer
+* Foreground service notifications
+* Progress notifications
+* Determinate and indeterminate progress support
+* PendingIntent notification navigation
 
 In Progress:
 
-* Advanced notifications
-* Notification grouping and actions
+* Archive queue / DownloadManager
 * Archive reliability improvements
-* Archive state recovery
 * Edge-case handling
-* Archive lifecycle validation
 
 ## Roadmap
 
