@@ -2,8 +2,11 @@ package com.arkanzi.udant.feature.savedArticles.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.arkanzi.udant.core.job.JobManager
 import com.arkanzi.udant.core.model.Article
+import com.arkanzi.udant.feature.archive.job.ArchiveJobFactory
 import com.arkanzi.udant.feature.archive.manager.ArchiveManager
+import com.arkanzi.udant.feature.archive.model.ArchiveJobRequest
 import com.arkanzi.udant.feature.savedArticles.repository.SavedArticlesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +19,9 @@ import javax.inject.Inject
 class SavedArticlesViewModel @Inject constructor(
 
     private val repository: SavedArticlesRepository,
-    private val archiveManager: ArchiveManager
+    private val archiveManager: ArchiveManager,
+    private val archiveJobFactory: ArchiveJobFactory,
+    private val jobManager: JobManager
 
 ) : ViewModel() {
 
@@ -61,9 +66,7 @@ class SavedArticlesViewModel @Inject constructor(
         }
     }
 
-    fun saveArticle(
-        article: Article
-    ) {
+    fun saveArticle(article: Article) {
 
         viewModelScope.launch {
 
@@ -71,9 +74,7 @@ class SavedArticlesViewModel @Inject constructor(
         }
     }
 
-    fun removeSavedArticle(
-        articleUrl: String
-    ) {
+    fun removeSavedArticle(articleUrl: String) {
 
         viewModelScope.launch {
 
@@ -83,17 +84,15 @@ class SavedArticlesViewModel @Inject constructor(
         }
     }
 
-    fun archive(articleId:Long){
-     viewModelScope.launch {
-         archiveManager.processArchive(articleId)
-     }
-    }
-
-    fun deleteArchive(articleId: Long){
+    fun deleteArchive(articleId: Long) {
         viewModelScope.launch {
             archiveManager.deleteArchive(articleId)
         }
     }
 
+    fun archiveSavedArticle(archiveJobRequest: ArchiveJobRequest) {
+        val job = archiveJobFactory.create(archiveJobRequest)
+        jobManager.download(job)
+    }
 
 }

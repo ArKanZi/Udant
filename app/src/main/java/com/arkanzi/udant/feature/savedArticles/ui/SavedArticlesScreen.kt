@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arkanzi.udant.core.model.ArchiveStatus
 import com.arkanzi.udant.core.model.Article
 import com.arkanzi.udant.core.navigation.Navigator
+import com.arkanzi.udant.feature.archive.model.ArchiveJobRequest
 import com.arkanzi.udant.feature.savedArticles.viewmodel.SavedArticlesViewModel
 
 @Composable
@@ -102,7 +103,14 @@ fun SavedArticlesScreen(
                     )
                 },
                 onArchiveClick = {
-                    viewModel.archive(articleId = article.articleId)
+//                    viewModel.archive(articleId = article.articleId)
+                    viewModel.archiveSavedArticle(
+                        ArchiveJobRequest(
+                            articleId = article.articleId,
+                            articleTitle = article.title,
+                            articleUrl = article.articleUrl
+                        )
+                    )
 
                 },
                 onArchiveDeleteClick = {
@@ -158,7 +166,7 @@ private fun SavedArticleItem(
                 color = Color.Gray
             )
         }
-        Box{
+        Box {
             Icon(
                 imageVector = if (article.archiveStatus == ArchiveStatus.COMPLETED) {
                     Icons.Filled.Archive
@@ -182,8 +190,8 @@ private fun SavedArticleItem(
                     .clickable(
                         onClick = if (article.archiveStatus != ArchiveStatus.COMPLETED) {
                             onArchiveClick
-                        }else{
-                            {isExpanded = true}
+                        } else {
+                            { isExpanded = true }
                         }
                     )
             )

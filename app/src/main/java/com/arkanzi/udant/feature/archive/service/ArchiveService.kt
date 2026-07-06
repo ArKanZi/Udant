@@ -9,6 +9,7 @@ import android.webkit.WebViewClient
 import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.core.webview.WebViewConfig
 import com.arkanzi.udant.core.webview.WebViewProvider
+import com.arkanzi.udant.feature.archive.job.ArchiveJobRegistry
 import com.arkanzi.udant.feature.archive.manager.ArchiveManager
 import com.arkanzi.udant.feature.archive.model.ArchiveServiceResult
 import com.arkanzi.udant.feature.archive.model.ArchiveUpdate
@@ -31,6 +32,9 @@ class ArchiveService : Service() {
 
     @Inject
     lateinit var archiveManager: ArchiveManager
+
+    @Inject
+    lateinit var archiveJobRegistry: ArchiveJobRegistry
 
     @Inject
     lateinit var storageManager: StorageManager
@@ -126,7 +130,8 @@ class ArchiveService : Service() {
 
                                 } else {
 
-                                    archiveManager.onArchiveServiceResult(
+                                    archiveJobRegistry.complete(
+                                        articleId,
                                         ArchiveServiceResult.Success(
                                             savedArticleId = articleId,
                                             fileName = articleTitle,

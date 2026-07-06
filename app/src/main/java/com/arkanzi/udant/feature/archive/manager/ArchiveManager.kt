@@ -1,17 +1,13 @@
 package com.arkanzi.udant.feature.archive.manager
 
 import android.content.Context
-import android.content.Intent
 import android.util.Log
-import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import com.arkanzi.udant.core.model.ArchiveStatus
 import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.feature.archive.model.ArchiveServiceResult
 import com.arkanzi.udant.feature.archive.model.ArchiveUpdate
 import com.arkanzi.udant.feature.archive.notification.ArchiveNotification
 import com.arkanzi.udant.feature.archive.repository.ArchiveRepository
-import com.arkanzi.udant.feature.archive.service.ArchiveService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
@@ -33,90 +29,10 @@ class ArchiveManager @Inject constructor(
 
 ) {
 
-    suspend fun processArchive(
-        savedArticleId: Long
-    ): Result<Unit> {
 
-        val article =
-            archiveRepository
-                .getSavedArticleById(
-                    savedArticleId
-                )
-                ?: return Result.failure(
-                    IllegalStateException(
-                        "Article not found"
-                    )
-                )
+    fun hasNotificationPermission() = true
 
-        val archiveFolderUri =
-            archiveRepository
-                .getArchiveFolderUri()
-                .firstOrNull()
-
-        if (archiveFolderUri == null) {
-
-            return Result.failure(
-                IllegalStateException(
-                    "Archive folder not configured"
-                )
-            )
-        }
-
-        when (
-            article.archiveStatus
-        ) {
-
-            ArchiveStatus.QUEUED,
-            ArchiveStatus.ARCHIVING -> {
-
-                return Result.failure(
-                    IllegalStateException(
-                        "Archive already in progress"
-                    )
-                )
-            }
-
-            ArchiveStatus.COMPLETED -> {
-
-                return Result.failure(
-                    IllegalStateException(
-                        "Article already archived"
-                    )
-                )
-            }
-
-            else -> Unit
-        }
-
-        handleArchiveStatus(
-            ArchiveUpdate.Queued(savedArticleId)
-        )
-        archiveNotification.showArchiveQueued()
-
-
-        val intent =
-            Intent(
-                context,
-                ArchiveService::class.java
-            ).apply {
-
-                putExtra("article_id", article.savedArticleId)
-                putExtra("article_title", article.title)
-                putExtra("article_url", article.articleUrl)
-            }
-
-        ContextCompat.startForegroundService(
-            context,
-            intent
-        )
-
-
-
-
-        return Result.success(
-            Unit
-        )
-    }
+    fun hasStoragePermission() = true
 
     suspend fun deleteArchive(
         savedArticleId: Long
