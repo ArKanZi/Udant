@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.arkanzi.udant.core.database.UdantDatabase
 import com.arkanzi.udant.core.database.dao.ArticleDao
+import com.arkanzi.udant.core.database.dao.DownloadJobDao
 import com.arkanzi.udant.core.database.dao.SavedArticleDao
 import dagger.Module
 import dagger.Provides
@@ -46,5 +47,14 @@ object DatabaseModule {
     ): SavedArticleDao {
 
         return database.savedArticleDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDownloadJobDao(
+        database: UdantDatabase
+    ): DownloadJobDao {
+
+        return database.downloadJobDao()
     }
 }

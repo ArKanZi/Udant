@@ -93,6 +93,18 @@ interface SavedArticleDao {
     suspend fun clearArchive(
         savedArticleId: Long,
     )
+
+    @Query("""
+    UPDATE saved_articles
+    SET archiveUri = :archiveUri,
+        archiveStatus = :archiveStatus
+    WHERE savedArticleId = :savedArticleId
+""")
+    suspend fun updateArchive(
+        savedArticleId: Long,
+        archiveUri: String,
+        archiveStatus: ArchiveStatus
+    )
 }
 
 

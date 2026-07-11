@@ -2,11 +2,9 @@ package com.arkanzi.udant.feature.savedArticles.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.arkanzi.udant.core.job.JobManager
 import com.arkanzi.udant.core.model.Article
-import com.arkanzi.udant.feature.archive.job.ArchiveJobFactory
 import com.arkanzi.udant.feature.archive.manager.ArchiveManager
-import com.arkanzi.udant.feature.archive.model.ArchiveJobRequest
+import com.arkanzi.udant.feature.archive.model.ArchiveRequest
 import com.arkanzi.udant.feature.savedArticles.repository.SavedArticlesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,8 +18,6 @@ class SavedArticlesViewModel @Inject constructor(
 
     private val repository: SavedArticlesRepository,
     private val archiveManager: ArchiveManager,
-    private val archiveJobFactory: ArchiveJobFactory,
-    private val jobManager: JobManager
 
 ) : ViewModel() {
 
@@ -90,9 +86,10 @@ class SavedArticlesViewModel @Inject constructor(
         }
     }
 
-    fun archiveSavedArticle(archiveJobRequest: ArchiveJobRequest) {
-        val job = archiveJobFactory.create(archiveJobRequest)
-        jobManager.download(job)
+    fun archiveSavedArticle(archiveRequest: ArchiveRequest) {
+        viewModelScope.launch {
+            archiveManager.archive(archiveRequest)
+        }
     }
 
 }

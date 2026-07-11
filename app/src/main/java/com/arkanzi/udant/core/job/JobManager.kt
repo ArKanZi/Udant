@@ -1,16 +1,45 @@
 package com.arkanzi.udant.core.job
 
-import com.arkanzi.udant.core.job.download.DownloadJob
-import com.arkanzi.udant.core.job.download.DownloadManager
+import com.arkanzi.udant.core.job.model.DownloadJobType
+import com.arkanzi.udant.core.job.model.DownloadPayload
+import com.arkanzi.udant.core.job.model.DownloadRequest
+import com.arkanzi.udant.core.job.model.JobPayload
+import com.arkanzi.udant.core.job.model.JobRequest
+import com.arkanzi.udant.core.job.model.JobType
 import javax.inject.Inject
 import javax.inject.Singleton
 
 
 @Singleton
 class JobManager @Inject constructor(
-    private val downloadManger: DownloadManager
-){
-    fun download(job: DownloadJob){
-        downloadManger.enqueue(job)
+    private val downloadManager: DownloadManager
+) {
+    val downloadEvents = downloadManager.downloadEvents
+
+    suspend fun <T : JobPayload> enqueue(jobRequest: JobRequest<T>) {
+        when (jobRequest.jobType) {
+            JobType.DOWNLOAD -> downloadManager.enqueue(
+                downloadRequest = DownloadRequest.Execute(
+                    downloadJobType = DownloadJobType.ARCHIVE,
+                    referenceId = jobRequest.referenceId,
+                    payload = jobRequest.payload as DownloadPayload
+                )
+            )
+        }
+
     }
 }
+
+//JobManager
+//
+//├── DownloadManager
+//│     ├── ArchiveJob
+//│     ├── PdfJob
+//│     └── ExtensionJob
+//│
+//├── SyncManager
+//│     ├── FeedSyncJob
+//│     └── BookmarkSyncJob
+//│
+//└── CleanupManager
+//└── CacheCleanupJob

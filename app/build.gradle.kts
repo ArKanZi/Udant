@@ -50,6 +50,7 @@ dependencies {
 
     //serialization
     implementation(libs.kotlinx.serialization.core)
+    implementation(libs.kotlinx.serialization.json)
 
     //Jsoup
     implementation(libs.jsoup)

@@ -1,8 +1,10 @@
 package com.arkanzi.udant.feature.savedArticles.repository
 
+import android.util.Log
 import com.arkanzi.udant.core.database.dao.SavedArticleDao
 import com.arkanzi.udant.core.mapper.toArticle
 import com.arkanzi.udant.core.mapper.toSavedArticleEntity
+import com.arkanzi.udant.core.model.ArchiveStatus
 import com.arkanzi.udant.core.model.Article
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -55,5 +57,17 @@ class SavedArticlesRepository @Inject constructor(
 
                 urls.toSet()
             }
+    }
+
+    suspend fun updateArchive(
+        savedArticleId: Long,
+        archiveUri: String,
+        archiveStatus: ArchiveStatus
+    ) {
+        savedArticleDao.updateArchive(
+            savedArticleId = savedArticleId,
+            archiveUri = archiveUri,
+            archiveStatus = archiveStatus
+        )
     }
 }

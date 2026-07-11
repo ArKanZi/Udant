@@ -36,7 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arkanzi.udant.core.model.ArchiveStatus
 import com.arkanzi.udant.core.model.Article
 import com.arkanzi.udant.core.navigation.Navigator
-import com.arkanzi.udant.feature.archive.model.ArchiveJobRequest
+import com.arkanzi.udant.feature.archive.model.ArchiveRequest
 import com.arkanzi.udant.feature.savedArticles.viewmodel.SavedArticlesViewModel
 
 @Composable
@@ -105,8 +105,8 @@ fun SavedArticlesScreen(
                 onArchiveClick = {
 //                    viewModel.archive(articleId = article.articleId)
                     viewModel.archiveSavedArticle(
-                        ArchiveJobRequest(
-                            articleId = article.articleId,
+                        ArchiveRequest(
+                            savedArticleId = article.articleId,
                             articleTitle = article.title,
                             articleUrl = article.articleUrl
                         )

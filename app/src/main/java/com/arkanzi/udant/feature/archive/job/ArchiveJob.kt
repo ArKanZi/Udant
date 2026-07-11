@@ -2,66 +2,58 @@ package com.arkanzi.udant.feature.archive.job
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.core.content.ContextCompat
-import com.arkanzi.udant.core.job.download.DownloadJob
-import com.arkanzi.udant.feature.archive.manager.ArchiveManager
-import com.arkanzi.udant.feature.archive.model.ArchiveJobRequest
-import com.arkanzi.udant.feature.archive.model.ArchiveUpdate
+import com.arkanzi.udant.core.job.registry.ArchiveJobRegistry
+import com.arkanzi.udant.core.job.worker.DownloadJob
+import com.arkanzi.udant.core.storage.StorageManager
+import com.arkanzi.udant.feature.archive.model.ArchiveExecutionRequest
+import com.arkanzi.udant.feature.archive.model.ArchiveResponse
 import com.arkanzi.udant.feature.archive.service.ArchiveService
 import dagger.hilt.android.qualifiers.ApplicationContext
 
 class ArchiveJob(
     @param:ApplicationContext
     private val context: Context,
-    private val request: ArchiveJobRequest,
-    private val archiveManager: ArchiveManager,
-    private val archiveJobRegistry: ArchiveJobRegistry
-) : DownloadJob {
+    private val request: ArchiveExecutionRequest,
+    private val archiveJobRegistry: ArchiveJobRegistry,
+    private val storageManager: StorageManager,
+) : DownloadJob<ArchiveResponse> {
 
-    override suspend fun execute() {
-
-        if (!archiveManager.hasNotificationPermission()) {
-            return
-        }
-
-        if (!archiveManager.hasStoragePermission()) {
-            return
-        }
-
-        archiveManager.handleArchiveStatus(
-            ArchiveUpdate.Archiving(
-                savedArticleId = request.articleId
-            )
-        )
+    override suspend fun execute(): ArchiveResponse {
 
         val deferred =
-            archiveJobRegistry.register(
-                request.articleId
-            )
+            archiveJobRegistry.register(request.jobId)
 
-        val intent = Intent(
-            context,
-            ArchiveService::class.java
-        ).apply {
-            putExtra("article_id", request.articleId)
-            putExtra("article_title", request.articleTitle)
+        val intent = Intent(context, ArchiveService::class.java).apply {
+            putExtra("job_id", request.jobId)
             putExtra("article_url", request.articleUrl)
         }
 
-        ContextCompat.startForegroundService(
-            context,
-            intent
-        )
-        Log.d("ArchiveJob", "Waiting...")
+        ContextCompat.startForegroundService(context, intent)
 
-        val result = deferred.await()
+        try {
 
-        Log.d("ArchiveJob", "Resumed")
+            when (val result = deferred.await()) {
 
+                is ArchiveResponse.Success -> {
+                    val archiveUri = storageManager.moveArchiveToSaf(
+                        request.jobId,
+                        request.articleTitle
+                    ) ?: throw IllegalStateException("Failed to move archive to SAF")
 
-        archiveManager.onArchiveServiceResult(result)
+                    return result.copy(uri = archiveUri)
+                }
 
-        archiveJobRegistry.remove(request.articleId)
+                is ArchiveResponse.Failure -> {
+                    throw result.throwable
+                }
+            }
+
+        } finally {
+
+            archiveJobRegistry.remove(
+                request.jobId
+            )
+        }
     }
 }

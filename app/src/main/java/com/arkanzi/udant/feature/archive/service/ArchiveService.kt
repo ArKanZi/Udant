@@ -9,10 +9,9 @@ import android.webkit.WebViewClient
 import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.core.webview.WebViewConfig
 import com.arkanzi.udant.core.webview.WebViewProvider
-import com.arkanzi.udant.feature.archive.job.ArchiveJobRegistry
+import com.arkanzi.udant.core.job.registry.ArchiveJobRegistry
 import com.arkanzi.udant.feature.archive.manager.ArchiveManager
-import com.arkanzi.udant.feature.archive.model.ArchiveServiceResult
-import com.arkanzi.udant.feature.archive.model.ArchiveUpdate
+import com.arkanzi.udant.feature.archive.model.ArchiveResponse
 import com.arkanzi.udant.feature.archive.notification.ArchiveNotification
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -21,7 +20,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -72,8 +70,7 @@ class ArchiveService : Service() {
     }
 
     private fun archiveArticle(
-        articleId:Long,
-        articleTitle: String,
+        jobId: String,
         articleUrl: String,
     ) {
 
@@ -98,7 +95,7 @@ class ArchiveService : Service() {
                 }
             }
 
-        val archivePath = storageManager.getLocalFile("temp_archive.mht").absolutePath
+        val archivePath = storageManager.getTempArchiveFile(jobId).absolutePath
 
         webView.webViewClient =
             object : WebViewClient() {
@@ -119,24 +116,19 @@ class ArchiveService : Service() {
 
                                 if (savedPath == null) {
 
-                                    archiveManager.onArchiveServiceResult(
-                                        ArchiveServiceResult.Failure(
-                                            savedArticleId = articleId,
-                                            throwable = IllegalStateException(
-                                                "saveWebArchive failed"
-                                            )
+                                    archiveJobRegistry.complete(
+                                        jobId,
+                                        result = ArchiveResponse.Failure(
+                                            jobId = jobId,
+                                            throwable = IllegalStateException("saveWebArchive failed")
                                         )
                                     )
 
                                 } else {
 
                                     archiveJobRegistry.complete(
-                                        articleId,
-                                        ArchiveServiceResult.Success(
-                                            savedArticleId = articleId,
-                                            fileName = articleTitle,
-                                            localFile = File(savedPath)
-                                        )
+                                        jobId=jobId,
+                                        result = ArchiveResponse.Success(jobId = jobId)
                                     )
                                 }
 
@@ -152,7 +144,7 @@ class ArchiveService : Service() {
                     }
                 }
             }
-
+        Log.d("ArchiveService", "Loading URL")
         webView.loadUrl(articleUrl)
     }
 
@@ -161,14 +153,11 @@ class ArchiveService : Service() {
         flags: Int,
         startId: Int
     ): Int {
-        val articleId =
-            intent?.getLongExtra(
-                "article_id",
-                -1L
-            ) ?: return START_NOT_STICKY
+        Log.d("ArchiveService", "Started")
 
-        val articleTitle = intent.getStringExtra(
-            "article_title",
+
+        val jobId = intent?.getStringExtra(
+            "job_id",
         ) ?: return START_NOT_STICKY
 
         val articleUrl = intent.getStringExtra(
@@ -177,19 +166,14 @@ class ArchiveService : Service() {
 
 
         serviceScope.launch {
-
-            archiveManager.handleArchiveStatus(
-                ArchiveUpdate.Archiving(articleId)
-            )
-                withContext(
-                    Dispatchers.Main
-                ) {
-                    archiveArticle(
-                        articleId = articleId,
-                        articleTitle = articleTitle,
-                        articleUrl = articleUrl,
-                    )
-                }
+            withContext(
+                Dispatchers.Main
+            ) {
+                archiveArticle(
+                    jobId = jobId,
+                    articleUrl = articleUrl,
+                )
+            }
 
         }
 

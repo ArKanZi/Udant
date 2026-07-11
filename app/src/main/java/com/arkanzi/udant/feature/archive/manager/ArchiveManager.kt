@@ -1,38 +1,108 @@
 package com.arkanzi.udant.feature.archive.manager
 
-import android.content.Context
-import android.util.Log
 import androidx.core.net.toUri
+import com.arkanzi.udant.core.job.JobManager
+import com.arkanzi.udant.core.job.event.DownloadEvent
+import com.arkanzi.udant.core.job.model.DownloadJobType
+import com.arkanzi.udant.core.job.model.JobRequest
+import com.arkanzi.udant.core.job.model.JobType
+import com.arkanzi.udant.core.model.ArchiveStatus
 import com.arkanzi.udant.core.storage.StorageManager
-import com.arkanzi.udant.feature.archive.model.ArchiveServiceResult
+import com.arkanzi.udant.core.system.SystemChecker
+import com.arkanzi.udant.feature.archive.model.ArchiveRequestPayload
+import com.arkanzi.udant.feature.archive.model.ArchiveRequest
+import com.arkanzi.udant.feature.archive.model.ArchiveResponsePayload
 import com.arkanzi.udant.feature.archive.model.ArchiveUpdate
-import com.arkanzi.udant.feature.archive.notification.ArchiveNotification
 import com.arkanzi.udant.feature.archive.repository.ArchiveRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.arkanzi.udant.feature.savedArticles.repository.SavedArticlesRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ArchiveManager @Inject constructor(
 
-    @param:ApplicationContext
-    private val context: Context,
+    private val systemChecker: SystemChecker,
 
     private val archiveRepository: ArchiveRepository,
 
-    private val archiveNotification: ArchiveNotification,
+    private val storageManager: StorageManager,
 
-    private val storageManager: StorageManager
+    private val jobManager: JobManager,
 
+    private val savedArticlesRepository: SavedArticlesRepository
 ) {
+    private val managerScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.IO
+    )
 
+    init {
+        observeDownloadEvents()
+    }
 
-    fun hasNotificationPermission() = true
+    private fun observeDownloadEvents() {
 
-    fun hasStoragePermission() = true
+        managerScope.launch {
+            jobManager.downloadEvents.collect { event ->
+
+                when (event) {
+
+                    is DownloadEvent.Completed -> {
+
+                        if (event.jobType != DownloadJobType.ARCHIVE) {
+                            return@collect
+                        }
+
+                        val payload = event.payload as ArchiveResponsePayload
+
+                        savedArticlesRepository.updateArchive(
+                            savedArticleId = payload.savedArticleId,
+                            archiveUri = payload.archiveUri,
+                            archiveStatus = ArchiveStatus.COMPLETED
+                        )
+                    }
+
+                    is DownloadEvent.Failed -> {
+
+                        if (event.jobType != DownloadJobType.ARCHIVE) {
+                            return@collect
+                        }
+
+                        // TODO
+                    }
+                }
+            }
+        }
+    }
+
+    suspend fun archive(request: ArchiveRequest) {
+//        Business checks TODO()
+
+        if (!systemChecker.hasStoragePermission()) {
+            return
+        }
+
+        handleArchiveStatus(
+            update = ArchiveUpdate.Queued(
+                savedArticleId = request.savedArticleId
+            )
+        )
+
+        jobManager.enqueue(
+            jobRequest = JobRequest.Execute(
+                jobType = JobType.DOWNLOAD,
+                referenceId = request.savedArticleId,
+                payload = ArchiveRequestPayload(
+                    articleTitle = request.articleTitle,
+                    articleUrl = request.articleUrl
+                )
+            )
+        )
+    }
 
     suspend fun deleteArchive(
         savedArticleId: Long
@@ -63,101 +133,6 @@ class ArchiveManager @Inject constructor(
                 savedArticleId
             )
         }
-    }
-
-    suspend fun onArchiveServiceResult(result: ArchiveServiceResult) {
-        archiveNotification.showArchiveProgress(
-            text = "Processing archive...",
-            indeterminate = true
-        )
-        when (result) {
-            is ArchiveServiceResult.Success -> {
-                finalizeArchive(result)
-            }
-
-            is ArchiveServiceResult.Failure -> {
-                handleArchiveFailure(result)
-            }
-        }
-    }
-
-    private suspend fun finalizeArchive(result: ArchiveServiceResult.Success) = withContext(
-        Dispatchers.IO
-    ) {
-
-        val safFolderUri = archiveRepository.getArchiveFolderUri().firstOrNull()
-        archiveNotification.showArchiveProgress(
-            text = "Copying to storage",
-            indeterminate = true
-        )
-
-        try {
-            val file =
-                storageManager.createFileInSaf(
-                    folderUri = safFolderUri?.toUri(),
-                    fileName =result.fileName,
-                    mimeType = "message/rfc822"
-                )
-            if (file == null) {
-                handleArchiveFailure(
-                    ArchiveServiceResult.Failure(
-                        savedArticleId = result.savedArticleId,
-                        throwable = IllegalStateException("Null File")
-                    )
-                )
-                return@withContext
-            } else {
-                val status = storageManager
-                    .copyToSaf(
-                        localFile = result.localFile,
-                        destinationUri = file.uri
-                    )
-
-                if (status) {
-                    handleArchiveStatus(
-                        ArchiveUpdate.Completed(
-                            savedArticleId = result.savedArticleId,
-                            archiveUri = file.uri.toString()
-                        )
-                    )
-                    archiveNotification.showArchiveCompleted()
-                }else {
-                    handleArchiveFailure(
-                        ArchiveServiceResult.Failure(
-                            savedArticleId = result.savedArticleId,
-                            throwable = IllegalStateException(
-                                "copyToSaf failed"
-                            )
-                        )
-                    )
-                }
-            }
-
-           val deleteStatus =  storageManager.deleteLocalFile(result.localFile)
-            if (!deleteStatus){
-                Log.e("Archive Manager","Failed to delete temporary archive: ${result.localFile}")
-            }
-
-        } catch (e: Exception) {
-
-            handleArchiveFailure(
-                ArchiveServiceResult.Failure(
-                    savedArticleId = result.savedArticleId,
-                    throwable = e
-                )
-            )
-            return@withContext
-        }
-
-    }
-
-    private suspend fun handleArchiveFailure(result: ArchiveServiceResult.Failure) {
-        handleArchiveStatus(
-            ArchiveUpdate.Failed(result.savedArticleId)
-        )
-
-        archiveNotification.showArchiveFailed(result.throwable)
-
     }
 
     suspend fun handleArchiveStatus(update: ArchiveUpdate) {

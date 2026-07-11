@@ -1,7 +1,7 @@
 package com.arkanzi.udant.feature.archive.model
 
-data class ArchiveJobRequest(
-    val articleId: Long,
+data class ArchiveRequest(
+    val savedArticleId: Long,
     val articleTitle: String,
     val articleUrl: String
 )
