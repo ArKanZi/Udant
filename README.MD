@@ -1,177 +1,275 @@
 # Udant
 
-Udant is an Android news and article reader focused on content ownership, offline access, and a distraction-free reading experience.
+Udant is an offline-first Android news and article reader focused on content ownership, reliability, and a distraction-free reading experience.
 
-The application aggregates articles into a unified feed while keeping user data local. Articles can be saved and archived for long-term offline access, allowing readers to preserve content beyond the lifecycle of the original web page.
+Instead of treating articles as temporary content, Udant allows users to save, archive, and manage articles locally, ensuring long-term access even after the original webpage becomes unavailable.
 
-## Features
+---
 
-* Feed-based article discovery
-* Infinite feed loading
-* Local article caching with Room
-* Saved articles
-* Full article archiving (MHT)
-* Offline article reading
-* Archive management (create, open, delete)
-* Archive status tracking
-* Archive progress notifications
-* Foreground archive service
-* Notification navigation to Saved Articles
-* Automatic article enrichment
-* Modern Jetpack Compose UI
-* MVVM architecture
-* Dependency Injection with Hilt
-* Kotlin Coroutines and Flow
+# Features
 
-## Tech Stack
+### Reading
 
-* Kotlin
-* Jetpack Compose
-* Room Database
-* Hilt
-* Kotlin Coroutines
-* StateFlow
-* OkHttp
-* Jsoup
-* Rome RSS Parser
-* Android Storage Access Framework (SAF)
-* Android Foreground Services
-* Android Notifications
-* PendingIntent
-* WebView
+- Feed-based article discovery
+- Infinite feed loading
+- Automatic article enrichment
+- Saved articles
+- Offline article reading
+- Local-first article storage
 
-## Architecture
+### Offline Archive System
 
-Udant follows an MVVM-based architecture:
+- Full webpage archiving (MHT)
+- Archive creation
+- Archive opening
+- Archive deletion
+- Archive status tracking
+- Archive lifecycle management
+- Persistent storage permissions (SAF)
+
+### Background Job System
+
+- Generic background job architecture
+- Persistent download queue
+- Generic request/response pipeline
+- Serialized job payloads
+- Event-driven communication
+- Extensible payload codec system
+- Feature-specific job handlers
+
+### Notifications
+
+- Foreground archive service
+- Archive progress notifications
+- Determinate & indeterminate progress
+- Notification navigation
+- Generic notification architecture
+
+### Modern Android
+
+- Jetpack Compose UI
+- MVVM architecture
+- Hilt Dependency Injection
+- Kotlin Coroutines & Flow
+- Room persistence
+
+---
+
+# Tech Stack
+
+- Kotlin
+- Jetpack Compose
+- Room Database
+- Hilt
+- Kotlin Coroutines
+- Flow / StateFlow
+- Kotlin Serialization
+- OkHttp
+- Jsoup
+- Rome RSS Parser
+- Android Storage Access Framework (SAF)
+- Android Foreground Services
+- Android Notifications
+- PendingIntent
+- WebView
+
+---
+
+# Architecture
+
+Udant follows an MVVM architecture combined with feature-specific managers and a generic background job system.
 
 ```text
-UI (Compose)
-    ↓
-ViewModel
-    ↓
-Manager / Repository
-    ↓
-DAO / Services
-    ↓
-Room Database & Local Storage
+                    UI (Compose)
+                          │
+                          ▼
+                     ViewModel
+                          │
+                          ▼
+                     Manager Layer
+            ┌─────────────┴─────────────┐
+            ▼                           ▼
+      Repository                  JobManager
+                                        │
+                                        ▼
+                               DownloadManager
+                           ┌─────────┴─────────┐
+                           ▼                   ▼
+                  Payload Codec        Job Handler
+                                              │
+                                              ▼
+                                        Feature Job
+                                              │
+                                              ▼
+                                           Service
+                                              │
+                                              ▼
+                                   Room & Local Storage
 ```
 
-### Responsibilities
+## Layer Responsibilities
 
-**ViewModel**
+### ViewModel
 
-* Manages UI state
-* Coordinates user actions
-* Exposes reactive application state
+- Manages UI state
+- Handles user interactions
+- Exposes reactive application state
 
-**Repository**
+### Repository
 
-* Handles data access
-* Coordinates caching and persistence
-* Provides application data to ViewModels
+- Provides application data
+- Coordinates persistence
+- Manages local caching
 
-**Manager**
+### Manager
 
-* Coordinates multi-step workflows
-* Handles archive operations and business logic
+- Coordinates feature workflows
+- Orchestrates business logic
+- Bridges UI and infrastructure
 
-**DAO**
+### JobManager
 
-* Provides local database access
+- Provides a unified background job API
+- Routes requests to specialized managers
 
-**Services**
+### DownloadManager
 
-* Executes long-running background tasks
+- Maintains the persistent download queue
+- Executes queued jobs
+- Publishes job events
+- Delegates work to feature handlers
 
-## Current Status
+### Job Handler
 
-### Phase 1 — MVP Stabilization ✅ Completed
+- Converts generic jobs into feature-specific execution
+- Translates feature results back into generic responses
 
-Completed:
+### Payload Codec
 
-* Feed loading
-* Feed refresh
-* Infinite loading
-* Local caching
-* Saved articles
-* Feed session management
-* Error handling improvements
-* Lifecycle stability fixes
+- Serializes feature payloads
+- Deserializes persisted payloads
+- Keeps the job system independent of feature models
 
-### Phase 2 — Offline Reading System ✅ Completed
+### Services
 
-Completed:
+- Execute long-running Android operations
+- Handle platform-specific functionality
 
-* Article archiving (MHT)
-* Offline article reading
-* Archive management (create, open, delete)
-* Archive status tracking
-* Archive storage location selection
-* SAF integration
-* Persisted storage permissions
-* Archive lifecycle management
+---
 
-### Phase 2.5 — Feature Completion & Reliability 🚧 In Progress
+# Current Status
 
-Completed:
+## Phase 1 — MVP Stabilization ✅ Completed
 
-* Generic notification architecture
-* Notification controller layer
-* Archive-specific notification layer
-* Foreground service notifications
-* Progress notifications
-* Determinate and indeterminate progress support
-* PendingIntent notification navigation
+- Feed loading
+- Feed refresh
+- Infinite scrolling
+- Local caching
+- Saved articles
+- Feed session management
+- Lifecycle improvements
+- Error handling improvements
 
-In Progress:
+---
 
-* Archive queue / DownloadManager
-* Archive reliability improvements
-* Edge-case handling
+## Phase 2 — Offline Reading System ✅ Completed
 
-## Roadmap
+- MHT article archiving
+- Offline reading
+- Archive management
+- Archive lifecycle
+- Archive status tracking
+- SAF integration
+- Storage permission persistence
 
-### Phase 3
+---
 
-* Theme settings
-* UI/UX improvements
-* Reader preferences
-* Archive preferences
+## Phase 2.5 — Background Infrastructure 🚧 In Progress
 
-### Phase 4
+### Completed
 
-* Architecture hardening
-* Reliability improvements
+- Generic background job architecture
+- Persistent download queue
+- Generic request pipeline
+- Generic response pipeline
+- Payload serialization
+- Payload codec registry
+- Generic notification architecture
+- Archive notification system
+- Event-driven communication
+- Feature-specific job handlers
 
-### Phase 4.5
+### In Progress
 
-* Performance validation
-* ANR prevention
-* Memory and database optimization
+- Archive reliability improvements
+- Queue recovery
+- Progress reporting refinements
+- Error recovery
+- Notification polish
 
-### Phase 5
+---
 
-* Source platform
-* Extension architecture
-* Source abstraction layer
+# Roadmap
 
-### Phase 5.5
+## Phase 3 — User Experience
 
-* Scaling and operational stability
-* Multi-source stress testing
-* Resource management
+- Theme settings
+- Reader preferences
+- Archive preferences
+- UI/UX improvements
 
-## Project Goals
+---
+
+## Phase 4 — Architecture Hardening
+
+- Reliability improvements
+- Performance optimization
+- Background processing improvements
+
+---
+
+## Phase 4.5 — Stability
+
+- ANR prevention
+- Memory optimization
+- Database optimization
+- Large-scale validation
+
+---
+
+## Phase 5 — Source Platform
+
+- Source abstraction layer
+- Extension architecture
+- Plugin-based source integration
+- Multi-source feed support
+
+---
+
+## Phase 5.5 — Scaling
+
+- Multi-source stress testing
+- Resource management
+- Operational stability
+- Performance validation
+
+---
+
+# Project Goals
 
 Udant aims to provide:
 
-* Local-first content ownership
-* Reliable offline reading
-* Source independence
-* Fast article access
-* Long-term extensibility
-* Full user control over content sources
+- Offline-first reading
+- Local content ownership
+- Reliable long-term article preservation
+- Source independence
+- Fast local access
+- Modular architecture
+- Extensible background processing
+- Full user control over content
 
-## License
+---
 
-This project is currently under active development.
+# License
+
+This project is currently under active development and is not yet production ready.
