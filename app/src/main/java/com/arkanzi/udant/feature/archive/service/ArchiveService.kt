@@ -2,15 +2,17 @@ package com.arkanzi.udant.feature.archive.service
 
 import android.app.Service
 import android.content.Intent
-import android.util.Log
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import com.arkanzi.udant.core.job.registry.ArchiveJobRegistry
 import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.core.webview.WebViewConfig
 import com.arkanzi.udant.core.webview.WebViewProvider
-import com.arkanzi.udant.core.job.registry.ArchiveJobRegistry
-import com.arkanzi.udant.feature.archive.manager.ArchiveManager
+import com.arkanzi.udant.feature.archive.model.ArchiveFailureReason
 import com.arkanzi.udant.feature.archive.model.ArchiveResponse
 import com.arkanzi.udant.feature.archive.notification.ArchiveNotification
 import dagger.hilt.android.AndroidEntryPoint
@@ -29,27 +31,21 @@ class ArchiveService : Service() {
     lateinit var archiveNotification: ArchiveNotification
 
     @Inject
-    lateinit var archiveManager: ArchiveManager
-
-    @Inject
     lateinit var archiveJobRegistry: ArchiveJobRegistry
 
     @Inject
     lateinit var storageManager: StorageManager
 
     private val serviceScope =
-        CoroutineScope(
-            SupervisorJob() +
-                    Dispatchers.IO
-        )
+        CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    private var isCompleted = false
 
     override fun onCreate() {
-
         super.onCreate()
 
         val foregroundNotification =
-            archiveNotification
-                .getForegroundNotification()
+            archiveNotification.getForegroundNotification()
 
         startForeground(
             foregroundNotification.notificationId,
@@ -57,29 +53,66 @@ class ArchiveService : Service() {
         )
     }
 
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int
+    ): Int {
+
+        val jobId = intent?.getStringExtra("job_id")
+            ?: return START_NOT_STICKY
+
+        val articleUrl = intent.getStringExtra("article_url")
+            ?: return START_NOT_STICKY
+
+        serviceScope.launch {
+            withContext(Dispatchers.Main) {
+                archiveArticle(
+                    jobId = jobId,
+                    articleUrl = articleUrl
+                )
+            }
+        }
+
+        return START_NOT_STICKY
+    }
+
+    override fun onBind(intent: Intent?) = null
+
     override fun onDestroy() {
-
         super.onDestroy()
-
         serviceScope.cancel()
-
-        Log.d(
-            TAG,
-            "Service destroyed"
-        )
     }
 
     private fun archiveArticle(
         jobId: String,
-        articleUrl: String,
+        articleUrl: String
     ) {
 
-        val webView =
-            WebViewProvider()
-                .create(
-                    context = applicationContext,
-                    config = WebViewConfig()
+        val webView = runCatching {
+            WebViewProvider().create(
+                context = applicationContext,
+                config = WebViewConfig()
+            )
+        }.getOrElse { throwable ->
+
+            serviceScope.launch {
+                complete(
+                    webView = null,
+                    jobId = jobId,
+                    result = ArchiveResponse.Failure(
+                        jobId = jobId,
+                        timestamp = System.currentTimeMillis(),
+                        header = "WebView Creation Failed",
+                        source = ArchiveService::class,
+                        reason = ArchiveFailureReason.ArchiveService.WebViewCreationFailed,
+                        throwable = throwable
+                    )
                 )
+            }
+
+            return
+        }
 
         webView.webChromeClient =
             object : WebChromeClient() {
@@ -95,10 +128,91 @@ class ArchiveService : Service() {
                 }
             }
 
-        val archivePath = storageManager.getTempArchiveFile(jobId).absolutePath
+        val archivePath = runCatching {
+            storageManager
+                .getTempArchiveFile(jobId)
+                .absolutePath
+        }.getOrElse { throwable ->
+
+            serviceScope.launch {
+                complete(
+                    webView = webView,
+                    jobId = jobId,
+                    result = ArchiveResponse.Failure(
+                        jobId = jobId,
+                        timestamp = System.currentTimeMillis(),
+                        header = "Storage Path Unknown",
+                        source = ArchiveService::class,
+                        reason = ArchiveFailureReason.ArchiveService.StoragePathNotFound,
+                        throwable = throwable
+                    )
+                )
+            }
+
+            return
+        }
 
         webView.webViewClient =
             object : WebViewClient() {
+
+                override fun onReceivedError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    error: WebResourceError?
+                ) {
+                    super.onReceivedError(view, request, error)
+
+                    if (request?.isForMainFrame != true) return
+
+                    serviceScope.launch {
+                        complete(
+                            webView = webView,
+                            jobId = jobId,
+                            result = ArchiveResponse.Failure(
+                                jobId = jobId,
+                                timestamp = System.currentTimeMillis(),
+                                header = "WebView Loading Failed",
+                                source = ArchiveService::class,
+                                reason = ArchiveFailureReason.ArchiveService.PageLoadFailed,
+                                throwable = Exception(
+                                    error?.description?.toString()
+                                        ?: "Unknown page load error"
+                                )
+                            )
+                        )
+                    }
+                }
+
+                override fun onReceivedHttpError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    errorResponse: WebResourceResponse?
+                ) {
+                    super.onReceivedHttpError(
+                        view,
+                        request,
+                        errorResponse
+                    )
+
+                    if (request?.isForMainFrame != true) return
+
+                    serviceScope.launch {
+                        complete(
+                            webView = webView,
+                            jobId = jobId,
+                            result = ArchiveResponse.Failure(
+                                jobId = jobId,
+                                timestamp = System.currentTimeMillis(),
+                                header = "WebView Loading Failed",
+                                source = ArchiveService::class,
+                                reason = ArchiveFailureReason.ArchiveService.HttpError,
+                                throwable = Exception(
+                                    "HTTP ${errorResponse?.statusCode}"
+                                )
+                            )
+                        )
+                    }
+                }
 
                 override fun onPageFinished(
                     view: WebView?,
@@ -112,82 +226,80 @@ class ArchiveService : Service() {
 
                         serviceScope.launch {
 
-                            try {
+                            if (savedPath == null) {
 
-                                if (savedPath == null) {
-
-                                    archiveJobRegistry.complete(
-                                        jobId,
-                                        result = ArchiveResponse.Failure(
-                                            jobId = jobId,
-                                            throwable = IllegalStateException("saveWebArchive failed")
+                                complete(
+                                    webView = webView,
+                                    jobId = jobId,
+                                    result = ArchiveResponse.Failure(
+                                        jobId = jobId,
+                                        timestamp = System.currentTimeMillis(),
+                                        header = "Creating Temporary File Failed",
+                                        source = ArchiveService::class,
+                                        reason = ArchiveFailureReason.ArchiveService.SaveWebArchiveFailed,
+                                        throwable = IllegalStateException(
+                                            "saveWebArchive failed"
                                         )
                                     )
+                                )
 
-                                } else {
+                            } else {
 
-                                    archiveJobRegistry.complete(
-                                        jobId=jobId,
-                                        result = ArchiveResponse.Success(jobId = jobId)
+                                complete(
+                                    webView = webView,
+                                    jobId = jobId,
+                                    result = ArchiveResponse.Success(
+                                        jobId = jobId,
+                                        timestamp = System.currentTimeMillis()
                                     )
-                                }
-
-                            } finally {
-
-                                withContext(Dispatchers.Main) {
-                                    webView.destroy()
-                                }
-
-                                stopSelf()
+                                )
                             }
                         }
                     }
                 }
             }
-        Log.d("ArchiveService", "Loading URL")
-        webView.loadUrl(articleUrl)
-    }
 
-    override fun onStartCommand(
-        intent: Intent?,
-        flags: Int,
-        startId: Int
-    ): Int {
-        Log.d("ArchiveService", "Started")
+        runCatching {
+            webView.loadUrl(articleUrl)
+        }.getOrElse { throwable ->
 
-
-        val jobId = intent?.getStringExtra(
-            "job_id",
-        ) ?: return START_NOT_STICKY
-
-        val articleUrl = intent.getStringExtra(
-            "article_url",
-        ) ?: return START_NOT_STICKY
-
-
-        serviceScope.launch {
-            withContext(
-                Dispatchers.Main
-            ) {
-                archiveArticle(
+            serviceScope.launch {
+                complete(
+                    webView = webView,
                     jobId = jobId,
-                    articleUrl = articleUrl,
+                    result = ArchiveResponse.Failure(
+                        jobId = jobId,
+                        timestamp = System.currentTimeMillis(),
+                        header = "WebView Loading Failed",
+                        source = ArchiveService::class,
+                        reason = ArchiveFailureReason.ArchiveService.PageLoadStartFailed,
+                        throwable = throwable
+                    )
                 )
             }
 
+            return
         }
-
-        return START_NOT_STICKY
     }
 
-    override fun onBind(
-        intent: Intent?
-    ) = null
+    private suspend fun complete(
+        webView: WebView?,
+        jobId: String,
+        result: ArchiveResponse
+    ) {
+        if (isCompleted) return
 
-    companion object {
+        isCompleted = true
 
-        private const val TAG =
-            "ArchiveService"
+        archiveJobRegistry.complete(
+            jobId = jobId,
+            result = result
+        )
 
+        withContext(Dispatchers.Main) {
+            webView?.destroy()
+        }
+
+        stopSelf()
     }
 }

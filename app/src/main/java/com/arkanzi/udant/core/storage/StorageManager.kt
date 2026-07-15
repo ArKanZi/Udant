@@ -7,10 +7,7 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.arkanzi.udant.core.preferences.AppPreferencesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,14 +19,11 @@ class StorageManager @Inject constructor(
 
     private val appPreferencesRepository: AppPreferencesRepository
 ) {
-    private val storageManagerScope = CoroutineScope(Dispatchers.IO)
-
     private suspend fun getSafFolderUri(): String? {
         return appPreferencesRepository
             .getArchiveFolderUri()
             .firstOrNull()
     }
-
 
     private fun getDocumentFile(fileUri: Uri?): DocumentFile? =
         fileUri?.let { DocumentFile.fromSingleUri(context, it) }
@@ -43,12 +37,36 @@ class StorageManager @Inject constructor(
     fun getTempArchiveFile(jobId: String): File =
         getLocalFile(ARCHIVE_TEMP_FILE.format(jobId))
 
+    fun createFileInSaf(folderUri: Uri?, fileName: String, mimeType: String): DocumentFile? {
+        val folder = getFolderFile(folderUri) ?: return null
+
+        if (!folder.exists()) {
+            return null
+        }
+
+        return folder.createFile(
+            mimeType,
+            fileName
+        )
+    }
+
+    fun deleteLocalFile(file: File): Boolean = file.delete()
+
+    fun deleteFileInSaf(folderUri: Uri?, fileUri: Uri): Boolean {
+        val doc = getDocumentFile(fileUri)
+        return if (hasPermission(folderUri) && doc?.exists() == true) {
+            doc.delete()
+        } else {
+            false
+        }
+    }
+
     suspend fun moveArchiveToSaf(
         jobId: String,
         articleTitle: String
     ): String? {
 
-        val folderUri = getSafFolderUri() ?: return null
+        val folderUri = getSafFolderUri() ?: throw IllegalStateException("Archive folder not configured")
 
         val tempFile = getTempArchiveFile(jobId)
 
@@ -56,7 +74,7 @@ class StorageManager @Inject constructor(
             folderUri = folderUri.toUri(),
             fileName = articleTitle,
             mimeType = "message/rfc822"
-        ) ?: return null
+        ) ?: throw IllegalStateException("Failed to Create File in SAF")
 
         return try {
             copyToSaf(
@@ -72,39 +90,10 @@ class StorageManager @Inject constructor(
 
             safFile.uri.toString()
 
-        } catch (e: Exception) {
+        } catch (_: Exception) {
 
-            Log.e(
-                TAG,
-                "Failed to move archive to SAF",
-                e
-            )
+            throw IllegalStateException("Failed to Move File in SAF")
 
-            null
-        }
-    }
-
-    fun deleteLocalFile(file: File): Boolean = file.delete()
-
-    fun createFileInSaf(folderUri: Uri?, fileName: String, mimeType: String): DocumentFile? {
-        val folder = getFolderFile(folderUri) ?: return null
-
-        if (!folder.exists()) {
-            return null
-        }
-
-        return folder.createFile(
-            mimeType,
-            fileName
-        )
-    }
-
-    fun deleteFileInSaf(folderUri: Uri?, fileUri: Uri): Boolean {
-        val doc = getDocumentFile(fileUri)
-        return if (hasPermission(folderUri) && doc?.exists() == true) {
-            doc.delete()
-        } else {
-            false
         }
     }
 

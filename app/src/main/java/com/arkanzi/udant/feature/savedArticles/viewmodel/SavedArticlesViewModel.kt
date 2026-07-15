@@ -44,24 +44,6 @@ class SavedArticlesViewModel @Inject constructor(
         }
     }
 
-    private val _savedUrls =
-        MutableStateFlow<Set<String>>(emptySet())
-
-    val savedUrls = _savedUrls.asStateFlow()
-
-    private fun observeSavedUrls() {
-
-        viewModelScope.launch {
-
-            repository
-                .getSavedUrls()
-                .collectLatest { urls ->
-
-                    _savedUrls.value = urls
-                }
-        }
-    }
-
     fun saveArticle(article: Article) {
 
         viewModelScope.launch {

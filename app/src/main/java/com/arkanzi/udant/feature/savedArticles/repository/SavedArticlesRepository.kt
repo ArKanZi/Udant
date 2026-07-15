@@ -1,6 +1,5 @@
 package com.arkanzi.udant.feature.savedArticles.repository
 
-import android.util.Log
 import com.arkanzi.udant.core.database.dao.SavedArticleDao
 import com.arkanzi.udant.core.mapper.toArticle
 import com.arkanzi.udant.core.mapper.toSavedArticleEntity

@@ -7,6 +7,7 @@ import com.arkanzi.udant.core.job.registry.ArchiveJobRegistry
 import com.arkanzi.udant.core.job.worker.DownloadJob
 import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.feature.archive.model.ArchiveExecutionRequest
+import com.arkanzi.udant.feature.archive.model.ArchiveFailureReason
 import com.arkanzi.udant.feature.archive.model.ArchiveResponse
 import com.arkanzi.udant.feature.archive.service.ArchiveService
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,31 +30,53 @@ class ArchiveJob(
             putExtra("article_url", request.articleUrl)
         }
 
-        ContextCompat.startForegroundService(context, intent)
+        runCatching {
+            ContextCompat.startForegroundService(context, intent)
+        }.getOrElse {throwable ->
+            return ArchiveResponse.Failure(
+                jobId = request.jobId,
+                timestamp = System.currentTimeMillis(),
+                header = "Archive Service Failed to Start",
+                source = ArchiveJob::class,
+                reason = ArchiveFailureReason.ArchiveJob.ServiceStartFailed,
+                throwable = throwable
+            )
+        }
 
         try {
 
             when (val result = deferred.await()) {
 
                 is ArchiveResponse.Success -> {
-                    val archiveUri = storageManager.moveArchiveToSaf(
-                        request.jobId,
-                        request.articleTitle
-                    ) ?: throw IllegalStateException("Failed to move archive to SAF")
 
-                    return result.copy(uri = archiveUri)
+                    return runCatching {
+
+                        val archiveUri = storageManager.moveArchiveToSaf(
+                            request.jobId,
+                            request.articleTitle
+                        )
+
+                        result.copy(uri = archiveUri)
+
+                    }.getOrElse { throwable ->
+
+                        ArchiveResponse.Failure(
+                            jobId = request.jobId,
+                            timestamp = System.currentTimeMillis(),
+                            header = "Creating File in SAF Failed",
+                            source = ArchiveJob::class,
+                            reason = ArchiveFailureReason.ArchiveJob.MoveToSafFailed,
+                            throwable = throwable
+                        )
+                    }
                 }
 
-                is ArchiveResponse.Failure -> {
-                    throw result.throwable
-                }
+                is ArchiveResponse.Failure -> return result
             }
 
         } finally {
 
-            archiveJobRegistry.remove(
-                request.jobId
-            )
+            archiveJobRegistry.remove(request.jobId)
         }
     }
 }

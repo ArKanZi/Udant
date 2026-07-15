@@ -1,15 +1,17 @@
 package com.arkanzi.udant.core.job
 
-import android.util.Log
 import com.arkanzi.udant.core.database.entity.DownloadJobEntity
 import com.arkanzi.udant.core.job.event.DownloadEvent
+import com.arkanzi.udant.core.job.model.DownloadFailureReason
 import com.arkanzi.udant.core.job.model.DownloadJobResponse
 import com.arkanzi.udant.core.job.model.DownloadJobStatus
+import com.arkanzi.udant.core.job.model.DownloadManagerLogFormatter
 import com.arkanzi.udant.core.job.model.DownloadPayload
 import com.arkanzi.udant.core.job.model.DownloadRequest
 import com.arkanzi.udant.core.job.registry.DownloadJobHandlerRegistry
 import com.arkanzi.udant.core.job.registry.PayloadCodecRegistry
 import com.arkanzi.udant.core.job.repository.DownloadJobRepository
+import com.arkanzi.udant.core.logging.AppLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,7 +26,8 @@ import javax.inject.Singleton
 class DownloadManager @Inject constructor(
     private val downloadJobRepository: DownloadJobRepository,
     private val handlerRegistry: DownloadJobHandlerRegistry,
-    private val payloadCodecRegistry: PayloadCodecRegistry
+    private val payloadCodecRegistry: PayloadCodecRegistry,
+    private val appLogger: AppLogger
 
 ) {
 
@@ -32,9 +35,7 @@ class DownloadManager @Inject constructor(
         replay = 0,
         extraBufferCapacity = 1
     )
-
-    val downloadEvents: SharedFlow<DownloadEvent> =
-        _downloadEvents
+    val downloadEvents: SharedFlow<DownloadEvent> = _downloadEvents
 
     private val managerScope = CoroutineScope(
         SupervisorJob() + Dispatchers.IO
@@ -45,7 +46,23 @@ class DownloadManager @Inject constructor(
 
         val codec = payloadCodecRegistry.get(downloadRequest.downloadJobType)
 
-        val payload = codec.serialize(downloadRequest.payload)
+        val payload = runCatching {
+            codec.serialize(downloadRequest.payload)
+        }.getOrElse { throwable ->
+            appLogger.error(
+                tag = DownloadManager::class,
+                message = DownloadManagerLogFormatter.formatFailure(
+                    jobId = null,
+                    header = "Queue Operation Failed",
+                    downloadJobType = downloadRequest.downloadJobType,
+                    reason = DownloadFailureReason.PayloadSerializationFailed,
+                    source = DownloadManager::class,
+                    exception = throwable::class.java.simpleName,
+                ),
+                throwable = throwable
+            )
+            return
+        }
 
         val downloadJobEntry = downloadJobRepository.getDownloadJobByReferenceId(
             downloadRequest.referenceId,
@@ -104,11 +121,7 @@ class DownloadManager @Inject constructor(
 
         val handler = handlerRegistry.get(job.jobType)
 
-        Log.d("DownloadManager", "Before handler.execute()")
-        val result = handler.execute(job)
-        Log.d("DownloadManager", "After handler.execute()")
-
-        when (result) {
+        when (val result = handler.execute(job)) {
 
             is DownloadJobResponse.Success -> {
 
@@ -127,6 +140,19 @@ class DownloadManager @Inject constructor(
             }
 
             is DownloadJobResponse.Failure -> {
+
+                appLogger.error(
+                    tag = DownloadManager::class,
+                    message = DownloadManagerLogFormatter.formatFailure(
+                        jobId = result.jobId,
+                        header = result.header,
+                        downloadJobType = result.downloadJobType,
+                        source = result.source,
+                        reason = result.reason,
+                        exception = result.throwable::class.java.simpleName
+                    ),
+                    throwable = result.throwable
+                )
 
                 downloadJobRepository.updateStatus(
                     jobId = job.jobId,
