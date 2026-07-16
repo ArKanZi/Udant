@@ -2,55 +2,58 @@ package com.arkanzi.udant.feature.archive.service
 
 import android.app.Service
 import android.content.Intent
+import android.util.Log
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import com.arkanzi.udant.core.job.dispatcher.DownloadDispatcher
+import com.arkanzi.udant.core.job.model.ProgressState
+import com.arkanzi.udant.core.job.notification.DownloadNotification
 import com.arkanzi.udant.core.job.registry.ArchiveJobRegistry
 import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.core.webview.WebViewConfig
 import com.arkanzi.udant.core.webview.WebViewProvider
 import com.arkanzi.udant.feature.archive.model.ArchiveFailureReason
 import com.arkanzi.udant.feature.archive.model.ArchiveResponse
-import com.arkanzi.udant.feature.archive.notification.ArchiveNotification
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 @AndroidEntryPoint
 class ArchiveService : Service() {
+    @Inject
+    lateinit var downloadNotification: DownloadNotification
 
     @Inject
-    lateinit var archiveNotification: ArchiveNotification
-
+    lateinit var downloadDispatcher: DownloadDispatcher
     @Inject
     lateinit var archiveJobRegistry: ArchiveJobRegistry
-
     @Inject
     lateinit var storageManager: StorageManager
-
     private val serviceScope =
         CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    private var shutdownJob: Job? = null
+
     private var isCompleted = false
+    private var isForegroundStarted = false
+
+
 
     override fun onCreate() {
         super.onCreate()
-
-        val foregroundNotification =
-            archiveNotification.getForegroundNotification()
-
-        startForeground(
-            foregroundNotification.notificationId,
-            foregroundNotification.notification
-        )
+        Log.d("ArchiveService", "onCreate")
     }
 
     override fun onStartCommand(
@@ -58,12 +61,29 @@ class ArchiveService : Service() {
         flags: Int,
         startId: Int
     ): Int {
+        cancelShutdown()
 
         val jobId = intent?.getStringExtra("job_id")
             ?: return START_NOT_STICKY
 
         val articleUrl = intent.getStringExtra("article_url")
             ?: return START_NOT_STICKY
+
+        if (!isForegroundStarted) {
+
+            val foreground = downloadNotification
+                .createForegroundNotification()
+            startForeground(
+                foreground.notificationId,
+                foreground.notification
+            )
+
+            isForegroundStarted = true
+        }
+
+
+
+
 
         serviceScope.launch {
             withContext(Dispatchers.Main) {
@@ -81,6 +101,9 @@ class ArchiveService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        isForegroundStarted = false
+        shutdownJob?.cancel()
         serviceScope.cancel()
     }
 
@@ -88,6 +111,7 @@ class ArchiveService : Service() {
         jobId: String,
         articleUrl: String
     ) {
+        isCompleted = false
 
         val webView = runCatching {
             WebViewProvider().create(
@@ -121,10 +145,14 @@ class ArchiveService : Service() {
                     view: WebView?,
                     newProgress: Int
                 ) {
-                    archiveNotification.showArchiveProgress(
-                        text = "Loading webpage",
-                        progress = newProgress
-                    )
+                    serviceScope.launch {
+                        downloadDispatcher.emitProgress(
+                            ProgressState.Loading(
+                                notificationId = jobId.hashCode(),
+                                progress = newProgress
+                            )
+                        )
+                    }
                 }
             }
 
@@ -218,6 +246,11 @@ class ArchiveService : Service() {
                     view: WebView?,
                     url: String?
                 ) {
+                    serviceScope.launch {
+                        downloadDispatcher.emitProgress(
+                            ProgressState.Generating(notificationId = jobId.hashCode())
+                        )
+                    }
 
                     view?.saveWebArchive(
                         archivePath,
@@ -287,10 +320,8 @@ class ArchiveService : Service() {
         jobId: String,
         result: ArchiveResponse
     ) {
-        if (isCompleted) return
-
-        isCompleted = true
-
+         if (isCompleted) return
+         isCompleted = true
         archiveJobRegistry.complete(
             jobId = jobId,
             result = result
@@ -300,6 +331,31 @@ class ArchiveService : Service() {
             webView?.destroy()
         }
 
-        stopSelf()
+        scheduleShutdown()
+    }
+
+    private fun cancelShutdown() {
+        shutdownJob?.cancel()
+        shutdownJob = null
+    }
+
+    private fun scheduleShutdown() {
+
+        cancelShutdown()
+
+        shutdownJob = serviceScope.launch {
+
+            delay(IDLE_TIMEOUT_MS.milliseconds)
+
+            withContext(Dispatchers.Main) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                isForegroundStarted = false
+                stopSelf()
+            }
+
+        }
+    }
+    companion object{
+        private const val IDLE_TIMEOUT_MS = 15_000L
     }
 }

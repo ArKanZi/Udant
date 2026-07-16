@@ -1,13 +1,15 @@
 package com.arkanzi.udant.core.job
 
 import com.arkanzi.udant.core.database.entity.DownloadJobEntity
-import com.arkanzi.udant.core.job.event.DownloadEvent
+import com.arkanzi.udant.core.job.dispatcher.DownloadDispatcher
+import com.arkanzi.udant.core.job.event.Events
 import com.arkanzi.udant.core.job.model.DownloadFailureReason
 import com.arkanzi.udant.core.job.model.DownloadJobResponse
 import com.arkanzi.udant.core.job.model.DownloadJobStatus
 import com.arkanzi.udant.core.job.model.DownloadManagerLogFormatter
 import com.arkanzi.udant.core.job.model.DownloadPayload
 import com.arkanzi.udant.core.job.model.DownloadRequest
+import com.arkanzi.udant.core.job.model.ProgressState
 import com.arkanzi.udant.core.job.registry.DownloadJobHandlerRegistry
 import com.arkanzi.udant.core.job.registry.PayloadCodecRegistry
 import com.arkanzi.udant.core.job.repository.DownloadJobRepository
@@ -15,8 +17,6 @@ import com.arkanzi.udant.core.logging.AppLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -25,22 +25,25 @@ import javax.inject.Singleton
 @Singleton
 class DownloadManager @Inject constructor(
     private val downloadJobRepository: DownloadJobRepository,
+    private val downloadDispatcher: DownloadDispatcher,
     private val handlerRegistry: DownloadJobHandlerRegistry,
     private val payloadCodecRegistry: PayloadCodecRegistry,
     private val appLogger: AppLogger
 
 ) {
-
-    private val _downloadEvents = MutableSharedFlow<DownloadEvent>(
-        replay = 0,
-        extraBufferCapacity = 1
-    )
-    val downloadEvents: SharedFlow<DownloadEvent> = _downloadEvents
-
     private val managerScope = CoroutineScope(
         SupervisorJob() + Dispatchers.IO
     )
     private var isRunning = false
+
+    init {
+        appLogger.debug(
+            DownloadManager::class,
+            "DownloadManager created"
+        )
+
+    }
+
 
     suspend fun <T : DownloadPayload> enqueue(downloadRequest: DownloadRequest<T>) {
 
@@ -130,13 +133,18 @@ class DownloadManager @Inject constructor(
                     status = DownloadJobStatus.COMPLETED
                 )
 
-                _downloadEvents.emit(
-                    DownloadEvent.Completed(
+                downloadDispatcher.emitProgress(
+                    ProgressState.Completed(notificationId = result.jobId.hashCode())
+                )
+
+                downloadDispatcher.emitEvent(
+                    Events.Completed(
                         jobId = result.jobId,
                         jobType = job.jobType,
                         payload = result.payload
                     )
                 )
+
             }
 
             is DownloadJobResponse.Failure -> {
@@ -159,8 +167,14 @@ class DownloadManager @Inject constructor(
                     status = DownloadJobStatus.FAILED
                 )
 
-                _downloadEvents.emit(
-                    DownloadEvent.Failed(
+                downloadDispatcher.emitProgress(
+                    ProgressState.Failed(
+                        notificationId = result.jobId.hashCode(), reason = result.reason
+                    )
+                )
+
+                downloadDispatcher.emitEvent(
+                    Events.Failed(
                         jobId = result.jobId,
                         jobType = job.jobType,
                         throwable = result.throwable

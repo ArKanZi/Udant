@@ -73,7 +73,9 @@ class NotificationController @Inject constructor(
 
 //    update()
 //
-//    cancel()
+    fun cancel(notificationId: Int){
+        notificationManager.cancel(notificationId)
+    }
 //
 //    areNotificationsEnabled()
 

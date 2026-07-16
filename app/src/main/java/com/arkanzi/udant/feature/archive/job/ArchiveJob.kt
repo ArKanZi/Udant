@@ -3,6 +3,9 @@ package com.arkanzi.udant.feature.archive.job
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
+import com.arkanzi.udant.core.job.dispatcher.DownloadDispatcher
+import com.arkanzi.udant.core.job.model.ProgressState
+import com.arkanzi.udant.core.job.notification.DownloadNotification
 import com.arkanzi.udant.core.job.registry.ArchiveJobRegistry
 import com.arkanzi.udant.core.job.worker.DownloadJob
 import com.arkanzi.udant.core.storage.StorageManager
@@ -18,6 +21,8 @@ class ArchiveJob(
     private val request: ArchiveExecutionRequest,
     private val archiveJobRegistry: ArchiveJobRegistry,
     private val storageManager: StorageManager,
+    private val downloadDispatcher: DownloadDispatcher,
+    private val downloadNotification: DownloadNotification
 ) : DownloadJob<ArchiveResponse> {
 
     override suspend fun execute(): ArchiveResponse {
@@ -50,6 +55,11 @@ class ArchiveJob(
                 is ArchiveResponse.Success -> {
 
                     return runCatching {
+                        downloadDispatcher.emitProgress(
+                            ProgressState.Moving(
+                                notificationId = result.jobId.hashCode()
+                            )
+                        )
 
                         val archiveUri = storageManager.moveArchiveToSaf(
                             request.jobId,

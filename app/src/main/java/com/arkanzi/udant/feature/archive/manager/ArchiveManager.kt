@@ -2,10 +2,12 @@ package com.arkanzi.udant.feature.archive.manager
 
 import androidx.core.net.toUri
 import com.arkanzi.udant.core.job.JobManager
-import com.arkanzi.udant.core.job.event.DownloadEvent
+import com.arkanzi.udant.core.job.dispatcher.DownloadDispatcher
+import com.arkanzi.udant.core.job.event.Events
 import com.arkanzi.udant.core.job.model.DownloadJobType
 import com.arkanzi.udant.core.job.model.JobRequest
 import com.arkanzi.udant.core.job.model.JobType
+import com.arkanzi.udant.core.logging.AppLogger
 import com.arkanzi.udant.core.model.ArchiveStatus
 import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.core.system.SystemChecker
@@ -34,24 +36,33 @@ class ArchiveManager @Inject constructor(
 
     private val jobManager: JobManager,
 
-    private val savedArticlesRepository: SavedArticlesRepository
+    private val savedArticlesRepository: SavedArticlesRepository,
+
+    private val downloadDispatcher: DownloadDispatcher,
+
+    private val appLogger: AppLogger
 ) {
     private val managerScope = CoroutineScope(
         SupervisorJob() + Dispatchers.IO
     )
 
     init {
+        appLogger.debug(
+            ArchiveManager::class,
+            "ArchiveManager created"
+        )
+
         observeDownloadEvents()
     }
 
     private fun observeDownloadEvents() {
 
         managerScope.launch {
-            jobManager.downloadEvents.collect { event ->
+            downloadDispatcher.events.collect { event ->
 
                 when (event) {
 
-                    is DownloadEvent.Completed -> {
+                    is Events.Completed -> {
 
                         if (event.jobType != DownloadJobType.ARCHIVE) {
                             return@collect
@@ -66,7 +77,7 @@ class ArchiveManager @Inject constructor(
                         )
                     }
 
-                    is DownloadEvent.Failed -> {
+                    is Events.Failed -> {
 
                         if (event.jobType != DownloadJobType.ARCHIVE) {
                             return@collect

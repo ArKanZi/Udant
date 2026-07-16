@@ -14,7 +14,6 @@ import javax.inject.Singleton
 class JobManager @Inject constructor(
     private val downloadManager: DownloadManager
 ) {
-    val downloadEvents = downloadManager.downloadEvents
 
     suspend fun <T : JobPayload> enqueue(jobRequest: JobRequest<T>) {
         when (jobRequest.jobType) {
