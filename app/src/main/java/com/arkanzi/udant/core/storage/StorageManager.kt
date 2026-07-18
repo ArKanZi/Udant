@@ -5,7 +5,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.arkanzi.udant.core.preferences.AppPreferencesRepository
+import com.arkanzi.udant.core.preference.AppPreferenceRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.firstOrNull
 import java.io.File
@@ -17,10 +17,10 @@ class StorageManager @Inject constructor(
     @param:ApplicationContext
     private val context: Context,
 
-    private val appPreferencesRepository: AppPreferencesRepository
+    private val appPreferenceRepository: AppPreferenceRepository
 ) {
     private suspend fun getSafFolderUri(): String? {
-        return appPreferencesRepository
+        return appPreferenceRepository
             .getArchiveFolderUri()
             .firstOrNull()
     }

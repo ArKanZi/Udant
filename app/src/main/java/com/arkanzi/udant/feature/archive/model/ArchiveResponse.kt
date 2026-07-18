@@ -5,7 +5,6 @@ import kotlin.reflect.KClass
 sealed interface ArchiveResponse {
     val jobId: String
     val savedArticleId : Long?
-
     val timestamp:Long
 
     data class Success(

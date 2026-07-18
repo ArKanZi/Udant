@@ -9,10 +9,10 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.arkanzi.udant.core.job.dispatcher.DownloadDispatcher
-import com.arkanzi.udant.core.job.model.ProgressState
-import com.arkanzi.udant.core.job.notification.DownloadNotification
-import com.arkanzi.udant.core.job.registry.ArchiveJobRegistry
+import com.arkanzi.udant.core.job.download.dispatcher.DownloadDispatcher
+import com.arkanzi.udant.core.job.download.model.DownloadProgressState
+import com.arkanzi.udant.core.job.download.notification.DownloadNotification
+import com.arkanzi.udant.feature.archive.registry.ArchiveRegistry
 import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.core.webview.WebViewConfig
 import com.arkanzi.udant.core.webview.WebViewProvider
@@ -38,7 +38,7 @@ class ArchiveService : Service() {
     @Inject
     lateinit var downloadDispatcher: DownloadDispatcher
     @Inject
-    lateinit var archiveJobRegistry: ArchiveJobRegistry
+    lateinit var archiveRegistry: ArchiveRegistry
     @Inject
     lateinit var storageManager: StorageManager
     private val serviceScope =
@@ -147,7 +147,7 @@ class ArchiveService : Service() {
                 ) {
                     serviceScope.launch {
                         downloadDispatcher.emitProgress(
-                            ProgressState.Loading(
+                            DownloadProgressState.Loading(
                                 notificationId = jobId.hashCode(),
                                 progress = newProgress
                             )
@@ -248,7 +248,7 @@ class ArchiveService : Service() {
                 ) {
                     serviceScope.launch {
                         downloadDispatcher.emitProgress(
-                            ProgressState.Generating(notificationId = jobId.hashCode())
+                            DownloadProgressState.Generating(notificationId = jobId.hashCode())
                         )
                     }
 
@@ -322,7 +322,7 @@ class ArchiveService : Service() {
     ) {
          if (isCompleted) return
          isCompleted = true
-        archiveJobRegistry.complete(
+        archiveRegistry.complete(
             jobId = jobId,
             result = result
         )

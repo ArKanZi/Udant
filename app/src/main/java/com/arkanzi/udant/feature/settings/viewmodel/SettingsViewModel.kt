@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.arkanzi.udant.core.preferences.AppPreferences
-import com.arkanzi.udant.core.preferences.AppPreferencesRepository
+import com.arkanzi.udant.core.preference.AppPreference
+import com.arkanzi.udant.core.preference.AppPreferenceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -16,19 +16,19 @@ import androidx.core.net.toUri
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
 
-    private val appPreferencesRepository:
-    AppPreferencesRepository
+    private val appPreferenceRepository:
+    AppPreferenceRepository
 
 ) : ViewModel() {
 
 
     val preferences =
-        appPreferencesRepository
+        appPreferenceRepository
             .getPreferences()
             .stateIn(
                 scope = viewModelScope,
                 started =SharingStarted.Lazily,
-                initialValue = AppPreferences()
+                initialValue = AppPreference()
             )
 
     fun saveArchiveFolderUri(
@@ -37,7 +37,7 @@ class SettingsViewModel @Inject constructor(
 
         viewModelScope.launch {
 
-            appPreferencesRepository
+            appPreferenceRepository
                 .saveArchiveFolderUri(
                     uri = uri
                 )

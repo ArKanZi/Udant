@@ -1,5 +1,7 @@
 package com.arkanzi.udant.core.job.model
 
+import com.arkanzi.udant.core.job.contract.JobPayload
+
 sealed interface JobResponse {
 
     data class Completed(

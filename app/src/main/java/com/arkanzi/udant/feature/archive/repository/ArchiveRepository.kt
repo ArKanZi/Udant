@@ -2,7 +2,7 @@ package com.arkanzi.udant.feature.archive.repository
 
 import com.arkanzi.udant.core.database.dao.SavedArticleDao
 import com.arkanzi.udant.core.model.ArchiveStatus
-import com.arkanzi.udant.core.preferences.AppPreferencesRepository
+import com.arkanzi.udant.core.preference.AppPreferenceRepository
 import com.arkanzi.udant.feature.archive.model.ArchiveUpdate
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -11,12 +11,12 @@ import javax.inject.Singleton
 @Singleton
 class ArchiveRepository@Inject constructor(
     private val savedArticleDao: SavedArticleDao,
-    private val appPreferencesRepository: AppPreferencesRepository,
+    private val appPreferenceRepository: AppPreferenceRepository,
 
-) {
+    ) {
     fun getArchiveFolderUri(): Flow<String?> {
 
-        return appPreferencesRepository
+        return appPreferenceRepository
             .getArchiveFolderUri()
     }
 

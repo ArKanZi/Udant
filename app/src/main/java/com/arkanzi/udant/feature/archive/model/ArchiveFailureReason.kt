@@ -1,8 +1,8 @@
 package com.arkanzi.udant.feature.archive.model
 
-import com.arkanzi.udant.core.job.model.DownloadJobFailureReason
+import com.arkanzi.udant.core.job.download.contract.DownloadFailureReason
 
-sealed interface ArchiveFailureReason: DownloadJobFailureReason {
+sealed interface ArchiveFailureReason: DownloadFailureReason {
 
     sealed interface ArchiveService : ArchiveFailureReason {
         data object WebViewCreationFailed : ArchiveService
@@ -13,11 +13,9 @@ sealed interface ArchiveFailureReason: DownloadJobFailureReason {
         data object HttpError: ArchiveService
     }
 
-    sealed interface ArchiveJob : ArchiveFailureReason {
-
-        data object ServiceStartFailed: ArchiveJob
-
-        data object MoveToSafFailed : ArchiveJob
+    sealed interface Archive : ArchiveFailureReason {
+        data object ServiceStartFailed: Archive
+        data object MoveToSafFailed : Archive
 
     }
 }

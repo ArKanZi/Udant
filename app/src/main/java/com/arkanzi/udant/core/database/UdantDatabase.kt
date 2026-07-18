@@ -3,8 +3,8 @@ package com.arkanzi.udant.core.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.arkanzi.udant.core.database.converter.DownloadJobConverters
-import com.arkanzi.udant.core.database.converters.ArchiveStatusConverter
+import com.arkanzi.udant.core.database.converters.DownloadJobConverters
+import com.arkanzi.udant.core.database.converters.ArchiveStatusConverters
 import com.arkanzi.udant.core.database.dao.ArticleDao
 import com.arkanzi.udant.core.database.dao.DownloadJobDao
 import com.arkanzi.udant.core.database.dao.SavedArticleDao
@@ -22,7 +22,7 @@ import com.arkanzi.udant.core.database.entity.SavedArticleEntity
     exportSchema = false
 )
 @TypeConverters(
-    ArchiveStatusConverter::class,
+    ArchiveStatusConverters::class,
     DownloadJobConverters::class
 )
 abstract class UdantDatabase : RoomDatabase() {

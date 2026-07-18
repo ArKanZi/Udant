@@ -1,28 +1,28 @@
-package com.arkanzi.udant.core.database.converter
+package com.arkanzi.udant.core.database.converters
 
 import androidx.room.TypeConverter
-import com.arkanzi.udant.core.job.model.DownloadJobStatus
-import com.arkanzi.udant.core.job.model.DownloadJobType
+import com.arkanzi.udant.core.job.download.model.DownloadStatus
+import com.arkanzi.udant.core.job.download.model.DownloadType
 
 class DownloadJobConverters {
 
     @TypeConverter
     fun fromDownloadJobStatus(
-        status: DownloadJobStatus
+        status: DownloadStatus
     ): String = status.name
 
     @TypeConverter
     fun toDownloadJobStatus(
         value: String
-    ): DownloadJobStatus = DownloadJobStatus.valueOf(value)
+    ): DownloadStatus = DownloadStatus.valueOf(value)
 
     @TypeConverter
     fun fromDownloadJobType(
-        type: DownloadJobType
+        type: DownloadType
     ): String = type.name
 
     @TypeConverter
     fun toDownloadJobType(
         value: String
-    ): DownloadJobType = DownloadJobType.valueOf(value)
+    ): DownloadType = DownloadType.valueOf(value)
 }

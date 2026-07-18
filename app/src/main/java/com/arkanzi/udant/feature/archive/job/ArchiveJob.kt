@@ -3,11 +3,11 @@ package com.arkanzi.udant.feature.archive.job
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
-import com.arkanzi.udant.core.job.dispatcher.DownloadDispatcher
-import com.arkanzi.udant.core.job.model.ProgressState
-import com.arkanzi.udant.core.job.notification.DownloadNotification
-import com.arkanzi.udant.core.job.registry.ArchiveJobRegistry
-import com.arkanzi.udant.core.job.worker.DownloadJob
+import com.arkanzi.udant.core.job.download.dispatcher.DownloadDispatcher
+import com.arkanzi.udant.core.job.download.model.DownloadProgressState
+import com.arkanzi.udant.core.job.download.notification.DownloadNotification
+import com.arkanzi.udant.feature.archive.registry.ArchiveRegistry
+import com.arkanzi.udant.core.job.download.contract.DownloadJob
 import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.feature.archive.model.ArchiveExecutionRequest
 import com.arkanzi.udant.feature.archive.model.ArchiveFailureReason
@@ -19,7 +19,7 @@ class ArchiveJob(
     @param:ApplicationContext
     private val context: Context,
     private val request: ArchiveExecutionRequest,
-    private val archiveJobRegistry: ArchiveJobRegistry,
+    private val archiveRegistry: ArchiveRegistry,
     private val storageManager: StorageManager,
     private val downloadDispatcher: DownloadDispatcher,
     private val downloadNotification: DownloadNotification
@@ -28,7 +28,7 @@ class ArchiveJob(
     override suspend fun execute(): ArchiveResponse {
 
         val deferred =
-            archiveJobRegistry.register(request.jobId)
+            archiveRegistry.register(request.jobId)
 
         val intent = Intent(context, ArchiveService::class.java).apply {
             putExtra("job_id", request.jobId)
@@ -43,7 +43,7 @@ class ArchiveJob(
                 timestamp = System.currentTimeMillis(),
                 header = "Archive Service Failed to Start",
                 source = ArchiveJob::class,
-                reason = ArchiveFailureReason.ArchiveJob.ServiceStartFailed,
+                reason = ArchiveFailureReason.Archive.ServiceStartFailed,
                 throwable = throwable
             )
         }
@@ -56,7 +56,7 @@ class ArchiveJob(
 
                     return runCatching {
                         downloadDispatcher.emitProgress(
-                            ProgressState.Moving(
+                            DownloadProgressState.Moving(
                                 notificationId = result.jobId.hashCode()
                             )
                         )
@@ -75,7 +75,7 @@ class ArchiveJob(
                             timestamp = System.currentTimeMillis(),
                             header = "Creating File in SAF Failed",
                             source = ArchiveJob::class,
-                            reason = ArchiveFailureReason.ArchiveJob.MoveToSafFailed,
+                            reason = ArchiveFailureReason.Archive.MoveToSafFailed,
                             throwable = throwable
                         )
                     }
@@ -86,7 +86,7 @@ class ArchiveJob(
 
         } finally {
 
-            archiveJobRegistry.remove(request.jobId)
+            archiveRegistry.remove(request.jobId)
         }
     }
 }

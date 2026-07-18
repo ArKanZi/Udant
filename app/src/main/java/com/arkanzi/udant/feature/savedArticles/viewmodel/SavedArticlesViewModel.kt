@@ -3,7 +3,7 @@ package com.arkanzi.udant.feature.savedArticles.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arkanzi.udant.core.model.Article
-import com.arkanzi.udant.feature.archive.manager.ArchiveManager
+import com.arkanzi.udant.feature.archive.ArchiveManager
 import com.arkanzi.udant.feature.archive.model.ArchiveRequest
 import com.arkanzi.udant.feature.savedArticles.repository.SavedArticlesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel

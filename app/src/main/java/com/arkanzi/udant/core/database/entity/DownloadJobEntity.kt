@@ -2,8 +2,8 @@ package com.arkanzi.udant.core.database.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.arkanzi.udant.core.job.model.DownloadJobStatus
-import com.arkanzi.udant.core.job.model.DownloadJobType
+import com.arkanzi.udant.core.job.download.model.DownloadStatus
+import com.arkanzi.udant.core.job.download.model.DownloadType
 
 @Entity(tableName = "download_jobs")
 data class DownloadJobEntity(
@@ -13,9 +13,9 @@ data class DownloadJobEntity(
 
     val referenceId: Long,
 
-    val jobType: DownloadJobType,
+    val jobType: DownloadType,
 
-    val status: DownloadJobStatus,
+    val status: DownloadStatus,
 
     val payload: String,
 

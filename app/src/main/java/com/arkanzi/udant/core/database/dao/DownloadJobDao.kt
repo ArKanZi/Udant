@@ -6,8 +6,8 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.arkanzi.udant.core.database.entity.DownloadJobEntity
-import com.arkanzi.udant.core.job.model.DownloadJobStatus
-import com.arkanzi.udant.core.job.model.DownloadJobType
+import com.arkanzi.udant.core.job.download.model.DownloadStatus
+import com.arkanzi.udant.core.job.download.model.DownloadType
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -31,7 +31,7 @@ interface DownloadJobDao {
     LIMIT 1
 """)
     suspend fun getNextJobByStatus(
-        status: DownloadJobStatus
+        status: DownloadStatus
     ): DownloadJobEntity?
 
     @Query("""
@@ -41,7 +41,7 @@ interface DownloadJobDao {
         ORDER BY createdAt ASC
     """)
     fun getJobsByStatus(
-        status: DownloadJobStatus
+        status: DownloadStatus
     ): Flow<List<DownloadJobEntity>>
 
     @Query("""
@@ -61,7 +61,7 @@ interface DownloadJobDao {
     """)
     suspend fun updateStatus(
         jobId: String,
-        status: DownloadJobStatus,
+        status: DownloadStatus,
         updatedAt: Long
     )
 
@@ -86,7 +86,7 @@ interface DownloadJobDao {
 """)
     suspend fun getDownloadJobByReferenceId(
         referenceId: Long,
-        jobType: DownloadJobType
+        jobType: DownloadType
     ): DownloadJobEntity?
 
     @Query("""
