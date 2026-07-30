@@ -11,7 +11,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class SavedArticlesRepository @Inject constructor(
+class SavedArticleRepository @Inject constructor(
 
     private val savedArticleDao: SavedArticleDao
 
@@ -60,7 +60,7 @@ class SavedArticlesRepository @Inject constructor(
 
     suspend fun updateArchive(
         savedArticleId: Long,
-        archiveUri: String,
+        archiveUri: String?,
         archiveStatus: ArchiveStatus
     ) {
         savedArticleDao.updateArchive(

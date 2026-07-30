@@ -40,7 +40,7 @@ import com.arkanzi.udant.feature.archive.model.ArchiveRequest
 import com.arkanzi.udant.feature.savedArticles.viewmodel.SavedArticlesViewModel
 
 @Composable
-fun SavedArticlesScreen(
+fun SavedArticleScreen(
 
     modifier: Modifier = Modifier,
 

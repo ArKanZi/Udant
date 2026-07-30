@@ -13,15 +13,14 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface DownloadJobDao {
 
+    @Query("SELECT EXISTS(SELECT 1 FROM download_jobs)")
+    suspend fun hasQueue(): Boolean
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertJob(
         job: DownloadJobEntity
     )
 
-    @Update
-    suspend fun updateJob(
-        job: DownloadJobEntity
-    )
 
     @Query("""
     SELECT *
@@ -35,25 +34,6 @@ interface DownloadJobDao {
     ): DownloadJobEntity?
 
     @Query("""
-        SELECT *
-        FROM download_jobs
-        WHERE status = :status
-        ORDER BY createdAt ASC
-    """)
-    fun getJobsByStatus(
-        status: DownloadStatus
-    ): Flow<List<DownloadJobEntity>>
-
-    @Query("""
-        SELECT *
-        FROM download_jobs
-        WHERE jobId = :jobId
-    """)
-    suspend fun getJobById(
-        jobId: String
-    ): DownloadJobEntity?
-
-    @Query("""
         UPDATE download_jobs
         SET status = :status,
             updatedAt = :updatedAt
@@ -61,6 +41,16 @@ interface DownloadJobDao {
     """)
     suspend fun updateStatus(
         jobId: String,
+        status: DownloadStatus,
+        updatedAt: Long
+    )
+
+    @Query("""
+        UPDATE download_jobs
+        SET status = :status,
+            updatedAt = :updatedAt
+    """)
+    suspend fun updateAllStatus(
         status: DownloadStatus,
         updatedAt: Long
     )

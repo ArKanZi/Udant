@@ -8,6 +8,8 @@ enum class ArchiveStatus {
 
     ARCHIVING,
 
+    PAUSED,
+
     COMPLETED,
 
     FAILED

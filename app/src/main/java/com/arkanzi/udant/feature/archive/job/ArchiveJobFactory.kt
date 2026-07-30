@@ -2,7 +2,6 @@ package com.arkanzi.udant.feature.archive.job
 
 import android.content.Context
 import com.arkanzi.udant.core.job.download.dispatcher.DownloadDispatcher
-import com.arkanzi.udant.core.job.download.notification.DownloadNotification
 import com.arkanzi.udant.feature.archive.registry.ArchiveRegistry
 import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.feature.archive.model.ArchiveExecutionRequest
@@ -17,8 +16,7 @@ class ArchiveJobFactory @Inject constructor(
     private val context: Context,
     private val storageManager: StorageManager,
     private val archiveRegistry: ArchiveRegistry,
-    private val downloadDispatcher: DownloadDispatcher,
-    private val downloadNotification: DownloadNotification
+    private val downloadDispatcher: DownloadDispatcher
 
 ) {
     fun create(
@@ -28,7 +26,6 @@ class ArchiveJobFactory @Inject constructor(
         request = request,
         archiveRegistry = archiveRegistry,
         storageManager = storageManager,
-        downloadDispatcher = downloadDispatcher,
-        downloadNotification = downloadNotification
+        downloadDispatcher = downloadDispatcher
     )
 }

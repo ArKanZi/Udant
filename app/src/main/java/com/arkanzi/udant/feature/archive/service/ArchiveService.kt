@@ -2,7 +2,6 @@ package com.arkanzi.udant.feature.archive.service
 
 import android.app.Service
 import android.content.Intent
-import android.util.Log
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -17,7 +16,7 @@ import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.core.webview.WebViewConfig
 import com.arkanzi.udant.core.webview.WebViewProvider
 import com.arkanzi.udant.feature.archive.model.ArchiveFailureReason
-import com.arkanzi.udant.feature.archive.model.ArchiveResponse
+import com.arkanzi.udant.feature.archive.model.ArchiveResult
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,61 +36,73 @@ class ArchiveService : Service() {
 
     @Inject
     lateinit var downloadDispatcher: DownloadDispatcher
+
     @Inject
     lateinit var archiveRegistry: ArchiveRegistry
+
     @Inject
     lateinit var storageManager: StorageManager
     private val serviceScope =
         CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private var shutdownJob: Job? = null
+    private var currentWebView: WebView? = null
 
+    private var shutdownJob: Job? = null
     private var isCompleted = false
     private var isForegroundStarted = false
 
+    @Volatile
+    private var cancelRequested = false
 
-
-    override fun onCreate() {
-        super.onCreate()
-        Log.d("ArchiveService", "onCreate")
-    }
 
     override fun onStartCommand(
         intent: Intent?,
         flags: Int,
         startId: Int
     ): Int {
+
         cancelShutdown()
 
-        val jobId = intent?.getStringExtra("job_id")
-            ?: return START_NOT_STICKY
+        val jobId =
+            intent?.getStringExtra(ArchiveContract.EXTRA_JOB_ID)
+                ?: return START_NOT_STICKY
 
-        val articleUrl = intent.getStringExtra("article_url")
-            ?: return START_NOT_STICKY
+        when (intent.action) {
 
-        if (!isForegroundStarted) {
-
-            val foreground = downloadNotification
-                .createForegroundNotification()
-            startForeground(
-                foreground.notificationId,
-                foreground.notification
-            )
-
-            isForegroundStarted = true
-        }
+            ArchiveContract.ACTION_START -> {
 
 
+                val articleUrl =
+                    intent.getStringExtra(ArchiveContract.EXTRA_ARTICLE_URL)
+                        ?: return START_NOT_STICKY
 
+                if (!isForegroundStarted) {
 
+                    val foreground = downloadNotification
+                        .createForegroundNotification()
+                    startForeground(
+                        foreground.notificationId,
+                        foreground.notification
+                    )
 
-        serviceScope.launch {
-            withContext(Dispatchers.Main) {
-                archiveArticle(
-                    jobId = jobId,
-                    articleUrl = articleUrl
-                )
+                    isForegroundStarted = true
+                }
+
+                serviceScope.launch {
+                    withContext(Dispatchers.Main) {
+                        archiveArticle(
+                            jobId = jobId,
+                            articleUrl = articleUrl
+                        )
+                    }
+                }
             }
+
+            ArchiveContract.ACTION_STOP -> {
+                stopCurrentArchive(jobId = jobId)
+            }
+
+            else -> return START_NOT_STICKY
         }
 
         return START_NOT_STICKY
@@ -99,32 +110,36 @@ class ArchiveService : Service() {
 
     override fun onBind(intent: Intent?) = null
 
-    override fun onDestroy() {
-        super.onDestroy()
 
+    override fun onDestroy() {
         isForegroundStarted = false
+
+        currentWebView?.destroy()
+        currentWebView = null
         shutdownJob?.cancel()
         serviceScope.cancel()
+        super.onDestroy()
     }
 
     private fun archiveArticle(
         jobId: String,
         articleUrl: String
     ) {
+        cancelRequested = false
         isCompleted = false
 
+
         val webView = runCatching {
-            WebViewProvider().create(
+            currentWebView ?: WebViewProvider().create(
                 context = applicationContext,
                 config = WebViewConfig()
-            )
+            ).also { currentWebView = it }
         }.getOrElse { throwable ->
 
             serviceScope.launch {
                 complete(
-                    webView = null,
                     jobId = jobId,
-                    result = ArchiveResponse.Failure(
+                    result = ArchiveResult.Failure(
                         jobId = jobId,
                         timestamp = System.currentTimeMillis(),
                         header = "WebView Creation Failed",
@@ -145,6 +160,7 @@ class ArchiveService : Service() {
                     view: WebView?,
                     newProgress: Int
                 ) {
+                    if (cancelRequested) return
                     serviceScope.launch {
                         downloadDispatcher.emitProgress(
                             DownloadProgressState.Loading(
@@ -164,9 +180,8 @@ class ArchiveService : Service() {
 
             serviceScope.launch {
                 complete(
-                    webView = webView,
                     jobId = jobId,
-                    result = ArchiveResponse.Failure(
+                    result = ArchiveResult.Failure(
                         jobId = jobId,
                         timestamp = System.currentTimeMillis(),
                         header = "Storage Path Unknown",
@@ -188,15 +203,15 @@ class ArchiveService : Service() {
                     request: WebResourceRequest?,
                     error: WebResourceError?
                 ) {
+                    if (cancelRequested) return
                     super.onReceivedError(view, request, error)
 
                     if (request?.isForMainFrame != true) return
 
                     serviceScope.launch {
                         complete(
-                            webView = webView,
                             jobId = jobId,
-                            result = ArchiveResponse.Failure(
+                            result = ArchiveResult.Failure(
                                 jobId = jobId,
                                 timestamp = System.currentTimeMillis(),
                                 header = "WebView Loading Failed",
@@ -216,6 +231,7 @@ class ArchiveService : Service() {
                     request: WebResourceRequest?,
                     errorResponse: WebResourceResponse?
                 ) {
+                    if (cancelRequested) return
                     super.onReceivedHttpError(
                         view,
                         request,
@@ -226,9 +242,8 @@ class ArchiveService : Service() {
 
                     serviceScope.launch {
                         complete(
-                            webView = webView,
                             jobId = jobId,
-                            result = ArchiveResponse.Failure(
+                            result = ArchiveResult.Failure(
                                 jobId = jobId,
                                 timestamp = System.currentTimeMillis(),
                                 header = "WebView Loading Failed",
@@ -246,6 +261,7 @@ class ArchiveService : Service() {
                     view: WebView?,
                     url: String?
                 ) {
+                    if (cancelRequested) return
                     serviceScope.launch {
                         downloadDispatcher.emitProgress(
                             DownloadProgressState.Generating(notificationId = jobId.hashCode())
@@ -256,15 +272,15 @@ class ArchiveService : Service() {
                         archivePath,
                         false
                     ) { savedPath ->
+                        if (cancelRequested) return@saveWebArchive
 
                         serviceScope.launch {
 
                             if (savedPath == null) {
 
                                 complete(
-                                    webView = webView,
                                     jobId = jobId,
-                                    result = ArchiveResponse.Failure(
+                                    result = ArchiveResult.Failure(
                                         jobId = jobId,
                                         timestamp = System.currentTimeMillis(),
                                         header = "Creating Temporary File Failed",
@@ -279,9 +295,8 @@ class ArchiveService : Service() {
                             } else {
 
                                 complete(
-                                    webView = webView,
                                     jobId = jobId,
-                                    result = ArchiveResponse.Success(
+                                    result = ArchiveResult.Success(
                                         jobId = jobId,
                                         timestamp = System.currentTimeMillis()
                                     )
@@ -298,9 +313,8 @@ class ArchiveService : Service() {
 
             serviceScope.launch {
                 complete(
-                    webView = webView,
                     jobId = jobId,
-                    result = ArchiveResponse.Failure(
+                    result = ArchiveResult.Failure(
                         jobId = jobId,
                         timestamp = System.currentTimeMillis(),
                         header = "WebView Loading Failed",
@@ -315,21 +329,39 @@ class ArchiveService : Service() {
         }
     }
 
-    private suspend fun complete(
-        webView: WebView?,
+    private fun stopCurrentArchive(jobId: String) {
+
+        cancelRequested = true
+
+        currentWebView?.stopLoading()
+
+        serviceScope.launch {
+            jobId.let { jobId ->
+                complete(
+                    jobId = jobId,
+                    result = ArchiveResult.Paused(
+                        jobId = jobId,
+                        timestamp = System.currentTimeMillis()
+                    ),
+
+                    )
+            }
+        }
+
+    }
+
+    private fun complete(
         jobId: String,
-        result: ArchiveResponse
+        result: ArchiveResult,
     ) {
-         if (isCompleted) return
-         isCompleted = true
+        if (isCompleted) return
+        isCompleted = true
         archiveRegistry.complete(
             jobId = jobId,
             result = result
         )
 
-        withContext(Dispatchers.Main) {
-            webView?.destroy()
-        }
+        cancelRequested = false
 
         scheduleShutdown()
     }
@@ -355,7 +387,8 @@ class ArchiveService : Service() {
 
         }
     }
-    companion object{
+
+    companion object {
         private const val IDLE_TIMEOUT_MS = 15_000L
     }
 }

@@ -2,6 +2,7 @@ package com.arkanzi.udant.core.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -22,6 +23,8 @@ fun UdantTopAppBar(
 
     onSettingsClick: () -> Unit = {},
 
+    onDownloadClick: () -> Unit ={}
+
 
 ) {
 
@@ -36,6 +39,16 @@ fun UdantTopAppBar(
         },
 
         actions = {
+
+            IconButton(
+                onClick = onDownloadClick
+            ) {
+
+                Icon(
+                    imageVector = Icons.Outlined.Download,
+                    contentDescription = "Saved Articles"
+                )
+            }
 
 
             IconButton(

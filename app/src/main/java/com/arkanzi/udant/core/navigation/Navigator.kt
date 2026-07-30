@@ -38,4 +38,15 @@ class Navigator(
             )
         }
     }
+
+    fun openDownload(){
+        if (
+            backStack.lastOrNull() != DownloadScreenKey
+        ) {
+
+            backStack.add(
+                DownloadScreenKey
+            )
+        }
+    }
 }

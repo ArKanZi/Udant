@@ -14,6 +14,7 @@ class DownloadRepository @Inject constructor(
     private val dao: DownloadJobDao
 
 ) {
+    suspend fun hasQueue(): Boolean = dao.hasQueue()
     suspend fun getNextJobByStatus(status: DownloadStatus): DownloadJobEntity?{
         return dao.getNextJobByStatus(status)
     }
@@ -24,24 +25,6 @@ class DownloadRepository @Inject constructor(
         return dao.insertJob(job)
     }
 
-    suspend fun updateJob(
-        job: DownloadJobEntity
-    ) {
-        dao.updateJob(job)
-    }
-
-    fun getJobsByStatus(
-        status: DownloadStatus
-    ): Flow<List<DownloadJobEntity>> {
-        return dao.getJobsByStatus(status)
-    }
-
-    suspend fun getJobById(
-        jobId: String
-    ): DownloadJobEntity? {
-        return dao.getJobById(jobId)
-    }
-
     suspend fun updateStatus(
         jobId: String,
         status: DownloadStatus
@@ -49,6 +32,15 @@ class DownloadRepository @Inject constructor(
         dao.updateStatus(
             jobId = jobId,
             status = status,
+            updatedAt = System.currentTimeMillis()
+        )
+    }
+
+    suspend fun updateAllStatus(
+        status: DownloadStatus
+    ){
+        dao.updateAllStatus(
+            status=status,
             updatedAt = System.currentTimeMillis()
         )
     }

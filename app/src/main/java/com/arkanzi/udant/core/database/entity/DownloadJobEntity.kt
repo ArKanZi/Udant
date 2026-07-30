@@ -13,6 +13,8 @@ data class DownloadJobEntity(
 
     val referenceId: Long,
 
+    val title:String,
+
     val jobType: DownloadType,
 
     val status: DownloadStatus,

@@ -20,6 +20,7 @@ class JobManager @Inject constructor(
         when (jobRequest.jobType) {
             JobType.DOWNLOAD -> downloadManager.enqueue(
                 downloadRequest = DownloadRequest.Execute(
+                    title = jobRequest.title,
                     downloadType = DownloadType.ARCHIVE,
                     referenceId = jobRequest.referenceId,
                     payload = jobRequest.payload as DownloadPayload

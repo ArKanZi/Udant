@@ -1,6 +1,5 @@
-package com.arkanzi.udant.core.job.download.registry
+package com.arkanzi.udant.core.job.download.codec
 
-import com.arkanzi.udant.core.job.download.codec.DownloadPayloadCodec
 import com.arkanzi.udant.core.job.download.model.DownloadType
 import com.arkanzi.udant.feature.archive.codec.ArchivePayloadCodec
 import javax.inject.Inject

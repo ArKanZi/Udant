@@ -58,6 +58,9 @@ class DownloadNotificationObserver @Inject constructor(
                             notificationId = progress.notificationId
                         )
 
+                    is DownloadProgressState.Paused ->
+                        downloadNotification.cancel(progress.notificationId)
+
                     is DownloadProgressState.Completed ->
                         downloadNotification.showCompleted(
                             notificationId = progress.notificationId

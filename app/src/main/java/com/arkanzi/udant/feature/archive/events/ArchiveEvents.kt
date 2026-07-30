@@ -1,11 +1,11 @@
 package com.arkanzi.udant.feature.archive.events
 
-import com.arkanzi.udant.feature.archive.model.ArchiveResponsePayload
+import com.arkanzi.udant.feature.archive.model.ArchiveResultPayload
 
 sealed interface ArchiveEvent {
 
     data class Completed(
-        val payload: ArchiveResponsePayload
+        val payload: ArchiveResultPayload
     ) : ArchiveEvent
 
     data class Failed(

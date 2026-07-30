@@ -18,7 +18,7 @@ import com.arkanzi.udant.core.database.entity.SavedArticleEntity
         SavedArticleEntity::class,
         DownloadJobEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(

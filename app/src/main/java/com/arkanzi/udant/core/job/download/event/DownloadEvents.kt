@@ -16,4 +16,10 @@ sealed interface DownloadEvents {
         val jobType: DownloadType,
         val throwable: Throwable
     ) : DownloadEvents
+
+    data class Paused(
+        val jobId: String,
+        val jobType: DownloadType,
+        val payload: DownloadPayload
+    ) : DownloadEvents
 }

@@ -1,6 +1,6 @@
 package com.arkanzi.udant.feature.archive.registry
 
-import com.arkanzi.udant.feature.archive.model.ArchiveResponse
+import com.arkanzi.udant.feature.archive.model.ArchiveResult
 import kotlinx.coroutines.CompletableDeferred
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
@@ -10,13 +10,13 @@ import javax.inject.Singleton
 class ArchiveRegistry @Inject constructor() {
 
     private val jobs =
-        ConcurrentHashMap<String, CompletableDeferred<ArchiveResponse>>()
+        ConcurrentHashMap<String, CompletableDeferred<ArchiveResult>>()
 
     fun register(
         jobId: String
-    ): CompletableDeferred<ArchiveResponse> {
+    ): CompletableDeferred<ArchiveResult> {
 
-        val deferred = CompletableDeferred<ArchiveResponse>()
+        val deferred = CompletableDeferred<ArchiveResult>()
 
         jobs[jobId] = deferred
 
@@ -25,7 +25,7 @@ class ArchiveRegistry @Inject constructor() {
 
     fun complete(
         jobId: String,
-        result: ArchiveResponse
+        result: ArchiveResult
     ) {
 
         jobs[jobId]?.complete(result)

@@ -1,6 +1,5 @@
-package com.arkanzi.udant.core.job.download.registry
+package com.arkanzi.udant.core.job.download.handler
 
-import com.arkanzi.udant.core.job.download.handler.DownloadHandler
 import com.arkanzi.udant.core.job.download.model.DownloadType
 import com.arkanzi.udant.feature.archive.handler.ArchiveHandler
 import javax.inject.Inject

@@ -20,6 +20,10 @@ sealed interface DownloadProgressState {
         val notificationId: Int
     ) : DownloadProgressState
 
+    data class Paused(
+        val notificationId: Int
+    ) : DownloadProgressState
+
     data class Completed(
         val notificationId: Int
     ) : DownloadProgressState

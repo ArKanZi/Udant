@@ -2,7 +2,7 @@ package com.arkanzi.udant.feature.archive.model
 
 import kotlin.reflect.KClass
 
-sealed interface ArchiveResponse {
+sealed interface ArchiveResult {
     val jobId: String
     val savedArticleId : Long?
     val timestamp:Long
@@ -12,7 +12,7 @@ sealed interface ArchiveResponse {
         override val savedArticleId : Long? = null,
         override val timestamp: Long,
         val uri: String? = null
-    ) : ArchiveResponse
+    ) : ArchiveResult
 
     data class Failure(
         override val jobId: String,
@@ -22,5 +22,11 @@ sealed interface ArchiveResponse {
         val source: KClass<*>,
         val reason: ArchiveFailureReason,
         val throwable: Throwable
-    ) : ArchiveResponse
+    ) : ArchiveResult
+
+    data class Paused(
+        override val jobId: String,
+        override val savedArticleId: Long?= null,
+        override val timestamp: Long
+        ): ArchiveResult
 }

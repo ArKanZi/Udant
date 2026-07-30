@@ -7,7 +7,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.arkanzi.udant.core.navigation.Navigator
 import com.arkanzi.udant.core.ui.components.UdantTopAppBar
 
 @Composable
@@ -15,6 +14,8 @@ fun MainScaffold(
     onSavedClick: () -> Unit,
 
     onSettingsClick: () -> Unit,
+
+    onDownloadClick:()-> Unit,
 
     content: @Composable () -> Unit
 ) {
@@ -24,7 +25,8 @@ fun MainScaffold(
         topBar = {
             UdantTopAppBar(
                 onSavedClick = onSavedClick,
-                onSettingsClick = onSettingsClick
+                onSettingsClick = onSettingsClick,
+                onDownloadClick = onDownloadClick
             )
         },
         containerColor = Color.Black,

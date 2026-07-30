@@ -5,13 +5,14 @@ import android.content.Intent
 import androidx.core.content.ContextCompat
 import com.arkanzi.udant.core.job.download.dispatcher.DownloadDispatcher
 import com.arkanzi.udant.core.job.download.model.DownloadProgressState
-import com.arkanzi.udant.core.job.download.notification.DownloadNotification
 import com.arkanzi.udant.feature.archive.registry.ArchiveRegistry
 import com.arkanzi.udant.core.job.download.contract.DownloadJob
 import com.arkanzi.udant.core.storage.StorageManager
+import com.arkanzi.udant.feature.archive.model.ArchiveAction
 import com.arkanzi.udant.feature.archive.model.ArchiveExecutionRequest
 import com.arkanzi.udant.feature.archive.model.ArchiveFailureReason
-import com.arkanzi.udant.feature.archive.model.ArchiveResponse
+import com.arkanzi.udant.feature.archive.model.ArchiveResult
+import com.arkanzi.udant.feature.archive.service.ArchiveContract
 import com.arkanzi.udant.feature.archive.service.ArchiveService
 import dagger.hilt.android.qualifiers.ApplicationContext
 
@@ -21,24 +22,27 @@ class ArchiveJob(
     private val request: ArchiveExecutionRequest,
     private val archiveRegistry: ArchiveRegistry,
     private val storageManager: StorageManager,
-    private val downloadDispatcher: DownloadDispatcher,
-    private val downloadNotification: DownloadNotification
-) : DownloadJob<ArchiveResponse> {
+    private val downloadDispatcher: DownloadDispatcher
+) : DownloadJob<ArchiveResult> {
 
-    override suspend fun execute(): ArchiveResponse {
+    override suspend fun execute(): ArchiveResult {
+
 
         val deferred =
             archiveRegistry.register(request.jobId)
 
         val intent = Intent(context, ArchiveService::class.java).apply {
-            putExtra("job_id", request.jobId)
-            putExtra("article_url", request.articleUrl)
+            action =
+                if (request.action == ArchiveAction.START) ArchiveContract.ACTION_START
+                else ArchiveContract.ACTION_STOP
+            putExtra(ArchiveContract.EXTRA_JOB_ID, request.jobId)
+            putExtra(ArchiveContract.EXTRA_ARTICLE_URL, request.articleUrl)
         }
 
         runCatching {
             ContextCompat.startForegroundService(context, intent)
-        }.getOrElse {throwable ->
-            return ArchiveResponse.Failure(
+        }.getOrElse { throwable ->
+            return ArchiveResult.Failure(
                 jobId = request.jobId,
                 timestamp = System.currentTimeMillis(),
                 header = "Archive Service Failed to Start",
@@ -52,7 +56,7 @@ class ArchiveJob(
 
             when (val result = deferred.await()) {
 
-                is ArchiveResponse.Success -> {
+                is ArchiveResult.Success -> {
 
                     return runCatching {
                         downloadDispatcher.emitProgress(
@@ -70,7 +74,7 @@ class ArchiveJob(
 
                     }.getOrElse { throwable ->
 
-                        ArchiveResponse.Failure(
+                        ArchiveResult.Failure(
                             jobId = request.jobId,
                             timestamp = System.currentTimeMillis(),
                             header = "Creating File in SAF Failed",
@@ -81,7 +85,10 @@ class ArchiveJob(
                     }
                 }
 
-                is ArchiveResponse.Failure -> return result
+                is ArchiveResult.Failure -> return result
+
+                is ArchiveResult.Paused -> return result
+
             }
 
         } finally {

@@ -102,7 +102,7 @@ interface SavedArticleDao {
 """)
     suspend fun updateArchive(
         savedArticleId: Long,
-        archiveUri: String,
+        archiveUri: String?,
         archiveStatus: ArchiveStatus
     )
 }

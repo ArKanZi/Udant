@@ -6,10 +6,11 @@ import androidx.compose.runtime.remember
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.arkanzi.udant.core.job.download.ui.DownloadScreen
 import com.arkanzi.udant.core.ui.MainScaffold
 import com.arkanzi.udant.core.webview.WebViewScreen
 import com.arkanzi.udant.feature.feed.ui.FeedScreen
-import com.arkanzi.udant.feature.savedArticles.ui.SavedArticlesScreen
+import com.arkanzi.udant.feature.savedArticles.ui.SavedArticleScreen
 import com.arkanzi.udant.feature.settings.ui.SettingsScreen
 
 @Composable
@@ -32,7 +33,8 @@ fun AppNavigation(destination: String?, onDestinationConsumed: () -> Unit) {
 
     MainScaffold(
         onSavedClick = { navigator.openSaved() },
-        onSettingsClick = {navigator.openSettings() }
+        onSettingsClick = {navigator.openSettings() },
+        onDownloadClick = {navigator.openDownload()}
     ) {
         NavDisplay(
             backStack = backStack,
@@ -48,7 +50,11 @@ fun AppNavigation(destination: String?, onDestinationConsumed: () -> Unit) {
                 }
 
                 entry<SavedScreenKey>{
-                    SavedArticlesScreen(navigator = navigator)
+                    SavedArticleScreen(navigator = navigator)
+                }
+
+                entry <DownloadScreenKey>{
+                    DownloadScreen()
                 }
 
                 entry<SettingsScreenKey>{

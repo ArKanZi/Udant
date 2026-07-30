@@ -19,4 +19,7 @@ data class WebViewScreenKey(
 data object SavedScreenKey: UdantNavKey
 
 @Serializable
+data object DownloadScreenKey: UdantNavKey
+
+@Serializable
 data object SettingsScreenKey: UdantNavKey
