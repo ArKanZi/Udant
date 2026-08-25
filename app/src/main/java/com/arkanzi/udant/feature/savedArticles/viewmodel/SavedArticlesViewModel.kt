@@ -6,9 +6,9 @@ import com.arkanzi.udant.core.job.JobManager
 import com.arkanzi.udant.core.job.model.JobRequest
 import com.arkanzi.udant.core.job.model.JobType
 import com.arkanzi.udant.core.model.Article
-import com.arkanzi.udant.feature.archive.ArchiveManager
 import com.arkanzi.udant.feature.archive.model.ArchiveRequest
 import com.arkanzi.udant.feature.archive.model.ArchiveRequestPayload
+import com.arkanzi.udant.feature.archive.usecase.DeleteArchiveUseCase
 import com.arkanzi.udant.feature.savedArticles.repository.SavedArticleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,8 +21,8 @@ import javax.inject.Inject
 class SavedArticlesViewModel @Inject constructor(
 
     private val repository: SavedArticleRepository,
-    private val archiveManager: ArchiveManager,
-    private val jobManager: JobManager
+    private val jobManager: JobManager,
+    private val deleteArchiveUseCase: DeleteArchiveUseCase
 
     ) : ViewModel() {
 
@@ -49,14 +49,6 @@ class SavedArticlesViewModel @Inject constructor(
         }
     }
 
-    fun saveArticle(article: Article) {
-
-        viewModelScope.launch {
-
-            repository.saveArticle(article)
-        }
-    }
-
     fun removeSavedArticle(articleUrl: String) {
 
         viewModelScope.launch {
@@ -69,7 +61,7 @@ class SavedArticlesViewModel @Inject constructor(
 
     fun deleteArchive(articleId: Long) {
         viewModelScope.launch {
-            archiveManager.deleteArchive(articleId)
+            deleteArchiveUseCase(articleId)
         }
     }
 

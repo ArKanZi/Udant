@@ -9,9 +9,13 @@ class WebViewProvider{
 
     fun create(
         context: Context,
-        config: WebViewConfig
+        config: WebViewConfig,
+        backgroundColor: Int? = null
     ):WebView{
         return WebView(context).apply {
+            backgroundColor?.let {
+                setBackgroundColor(it)
+            }
                 CookieManager
                     .getInstance()
                     .setAcceptCookie(config.enableCookies)

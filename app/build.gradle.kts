@@ -44,10 +44,12 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.compose.ui.text.google.fonts)
     //dataStore
     implementation(libs.androidx.datastore.preferences)
 
     implementation(libs.androidx.documentfile)
+    implementation(libs.androidx.compose.material3)
 
     //serialization
     implementation(libs.kotlinx.serialization.core)
@@ -95,7 +97,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)

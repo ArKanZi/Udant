@@ -1,22 +1,16 @@
-package com.arkanzi.udant.feature.archive
+package com.arkanzi.udant.feature.archive.usecase
 
 import androidx.core.net.toUri
 import com.arkanzi.udant.core.storage.StorageManager
 import com.arkanzi.udant.feature.archive.repository.ArchiveRepository
 import kotlinx.coroutines.flow.firstOrNull
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class ArchiveManager @Inject constructor(
-
+class DeleteArchiveUseCase @Inject constructor(
     private val archiveRepository: ArchiveRepository,
-
-    private val storageManager: StorageManager,
+    private val storageManager: StorageManager
 ) {
-    suspend fun deleteArchive(
-        savedArticleId: Long
-    ) {
+    suspend operator fun invoke(savedArticleId: Long) {
         val archiveFolderUri =
             archiveRepository
                 .getArchiveFolderUri()
@@ -43,6 +37,6 @@ class ArchiveManager @Inject constructor(
                 savedArticleId
             )
         }
-    }
 
+    }
 }

@@ -7,5 +7,6 @@ data class WebViewConfig(
 
     val enableCookies: Boolean = true,
 
-    val enableJavascript: Boolean = true
+    val enableJavascript: Boolean = true,
+
 )

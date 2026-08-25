@@ -1,6 +1,5 @@
 package com.arkanzi.udant.feature.feed.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,6 +42,8 @@ import coil3.compose.AsyncImage
 import com.arkanzi.udant.core.model.Article
 import com.arkanzi.udant.core.navigation.Navigator
 import com.arkanzi.udant.core.ui.theme.UdantTheme
+import com.arkanzi.udant.feature.feed.ui.components.CategoryBar
+import com.arkanzi.udant.feature.feed.ui.components.FeedPage
 import com.arkanzi.udant.feature.feed.viewmodel.FeedViewModel
 import kotlinx.coroutines.launch
 
@@ -88,9 +89,10 @@ fun FeedScreen(
         }
     }
 
-    Box(
+    Column(
         modifier = modifier.fillMaxSize()
     ) {
+        CategoryBar()
 
         when {
 
@@ -161,7 +163,7 @@ fun FeedScreen(
 
             CircularProgressIndicator(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
+                    .align(Alignment.CenterHorizontally)
                     .padding(top = 16.dp),
 
                 strokeWidth = 2.dp,
@@ -182,7 +184,7 @@ fun FeedScreen(
             },
 
             modifier = Modifier
-                .align(Alignment.BottomEnd)
+                .align(Alignment.CenterHorizontally)
                 .padding(20.dp),
 
             containerColor = Color(0xFF1A1A1A)
@@ -198,145 +200,143 @@ fun FeedScreen(
     }
 }
 
-@Composable
-private fun FeedPage(
-    article: Article,
-    isSaved: Boolean,
-    onArticleClick: (String) -> Unit,
-    onSaveClick: () -> Unit
-) {
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) {
-
-        article.imageUrl?.let { imageUrl ->
-
-            AsyncImage(
-                model = imageUrl,
-                contentDescription = article.title,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.5f),
-
-                contentScale = ContentScale.Crop
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.5f)
-        ) {
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp),
-
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row {
-                    Text(
-                        text = article.sourceName,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = Color.LightGray
-                    )
-                    if (article.category != "Default") {
-                        Text(
-                            text = " - " + article.category,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = Color.LightGray
-                        )
-                    }
-                    Spacer(modifier = Modifier.size(5.dp))
-                    Icon(
-                        imageVector = if (isSaved) {
-                            Icons.Filled.Bookmark
-                        } else {
-                            Icons.Outlined.BookmarkBorder
-                        },
-
-                        contentDescription = if (isSaved) {
-                            "Remove Saved Article"
-                        } else {
-                            "Save Article"
-                        },
-
-                        tint = if (isSaved) {
-                            Color.White
-                        } else {
-                            Color.LightGray
-                        },
-
-                        modifier = Modifier.clickable(
-                            onClick = onSaveClick
-                        )
-                    )
-                }
-
-
-                Text(
-                    modifier = Modifier.clickable(onClick = { onArticleClick(article.articleUrl) }),
-                    text = article.title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Text(
-                    text = article.summary,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White,
-                    maxLines = 6,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Text(
-                    text = article.author ?: "Unknown",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.Gray
-                )
-            }
-
-            Text(
-                text = "Swipe for next",
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.Gray,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp)
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun FeedScreenPreview() {
-
-    UdantTheme {
-
-        FeedPage(
-            article = Article(
-                articleId = 1,
-                title = "Sample Article Title That Might Be Long and Need Several Lines to Display Correct",
-                summary = "This is a sample summary for the article. It provides a brief overview of what the article is about and should be long enough to test the max lines property of the text component.",
-                imageUrl = "https://example.com/image.jpg",
-                articleUrl = "https://example.com/article",
-                publishedAt = System.currentTimeMillis(),
-                sourceName = "Tech News",
-                author = "John Doe",
-                category = "World",
-                savedAt = 0
-            ),
-            onArticleClick = {},
-            isSaved = true,
-            onSaveClick = {}
-        )
-    }
-}
+//@Composable
+//private fun FeedPage(
+//    article: Article,
+//    isSaved: Boolean,
+//    onArticleClick: (String) -> Unit,
+//    onSaveClick: () -> Unit
+//) {
+//
+//    Column(
+//        modifier = Modifier
+//            .fillMaxSize()
+//    ) {
+//        article.imageUrl?.let { imageUrl ->
+//
+//            AsyncImage(
+//                model = imageUrl,
+//                contentDescription = article.title,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .weight(0.5f),
+//
+//                contentScale = ContentScale.Crop
+//            )
+//        }
+//
+//        Box(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//
+//                .weight(0.5f)
+//        ) {
+//
+//            Column(
+//                modifier = Modifier
+//                    .fillMaxSize(),
+//
+//                verticalArrangement = Arrangement.spacedBy(12.dp)
+//            ) {
+//                Row {
+//                    Text(
+//                        text = article.sourceName,
+//                        style = MaterialTheme.typography.labelLarge,
+//                        color = MaterialTheme.colorScheme.outline
+//                    )
+//                    if (article.category != "Default") {
+//                        Text(
+//                            text = " - " + article.category,
+//                            style = MaterialTheme.typography.labelLarge,
+//                            color = MaterialTheme.colorScheme.outline
+//                        )
+//                    }
+//                    Spacer(modifier = Modifier.size(5.dp))
+//                    Icon(
+//                        imageVector = if (isSaved) {
+//                            Icons.Filled.Bookmark
+//                        } else {
+//                            Icons.Outlined.BookmarkBorder
+//                        },
+//
+//                        contentDescription = if (isSaved) {
+//                            "Remove Saved Article"
+//                        } else {
+//                            "Save Article"
+//                        },
+//
+//                        tint = if (isSaved) {
+//                            Color.White
+//                        } else {
+//                            Color.LightGray
+//                        },
+//
+//                        modifier = Modifier.clickable(
+//                            onClick = onSaveClick
+//                        )
+//                    )
+//                }
+//
+//
+//                Text(
+//                    modifier = Modifier.clickable(onClick = { onArticleClick(article.articleUrl) }),
+//                    text = article.title,
+//                    style = MaterialTheme.typography.headlineSmall,
+//                    fontWeight = FontWeight.Bold,
+//                    color = MaterialTheme.colorScheme.onSurface,
+//                    maxLines = 3,
+//                    overflow = TextOverflow.Ellipsis
+//                )
+//
+//                Text(
+//                    text = article.summary,
+//                    style = MaterialTheme.typography.bodyLarge,
+//                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                    maxLines = 6,
+//                    overflow = TextOverflow.Ellipsis
+//                )
+//
+//                Text(
+//                    text = article.author ?: "Unknown",
+//                    style = MaterialTheme.typography.labelMedium,
+//                    color = MaterialTheme.colorScheme.outline
+//                )
+//            }
+//
+//            Text(
+//                text = "Swipe for next",
+//                style = MaterialTheme.typography.labelSmall,
+//                color = MaterialTheme.colorScheme.outline,
+//                modifier = Modifier
+//                    .align(Alignment.BottomCenter)
+//                    .padding(bottom = 16.dp)
+//            )
+//        }
+//    }
+//}
+//
+//@Preview(showBackground = true)
+//@Composable
+//fun FeedScreenPreview() {
+//
+//    UdantTheme {
+//
+//        FeedPage(
+//            article = Article(
+//                articleId = 1,
+//                title = "Sample Article Title That Might Be Long and Need Several Lines to Display Correct",
+//                summary = "This is a sample summary for the article. It provides a brief overview of what the article is about and should be long enough to test the max lines property of the text component.",
+//                imageUrl = "https://example.com/image.jpg",
+//                articleUrl = "https://example.com/article",
+//                publishedAt = System.currentTimeMillis(),
+//                sourceName = "Tech News",
+//                author = "John Doe",
+//                category = "World",
+//                savedAt = 0
+//            ),
+//            onArticleClick = {},
+//            isSaved = true,
+//            onSaveClick = {}
+//        )
+//    }
+//}

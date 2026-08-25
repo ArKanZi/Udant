@@ -7,6 +7,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.arkanzi.udant.core.job.download.ui.DownloadScreen
+import com.arkanzi.udant.core.navigation.helper.getScreenChrome
 import com.arkanzi.udant.core.ui.MainScaffold
 import com.arkanzi.udant.core.webview.WebViewScreen
 import com.arkanzi.udant.feature.feed.ui.FeedScreen
@@ -18,6 +19,15 @@ fun AppNavigation(destination: String?, onDestinationConsumed: () -> Unit) {
     val startKey = FeedScreenKey
     val backStack = rememberNavBackStack(startKey)
     val navigator = remember { Navigator(backStack) }
+
+    val currentKey = backStack.lastOrNull()
+
+
+    val screenChrome = getScreenChrome(
+        currentKey = currentKey,
+        navigator = navigator
+    )
+
 
     LaunchedEffect(destination) {
 
@@ -32,9 +42,7 @@ fun AppNavigation(destination: String?, onDestinationConsumed: () -> Unit) {
     }
 
     MainScaffold(
-        onSavedClick = { navigator.openSaved() },
-        onSettingsClick = {navigator.openSettings() },
-        onDownloadClick = {navigator.openDownload()}
+        screenChrome = screenChrome
     ) {
         NavDisplay(
             backStack = backStack,
@@ -49,15 +57,15 @@ fun AppNavigation(destination: String?, onDestinationConsumed: () -> Unit) {
                     WebViewScreen(url = it.articleUrl, navigator = navigator)
                 }
 
-                entry<SavedScreenKey>{
+                entry<SavedScreenKey> {
                     SavedArticleScreen(navigator = navigator)
                 }
 
-                entry <DownloadScreenKey>{
+                entry<DownloadScreenKey> {
                     DownloadScreen()
                 }
 
-                entry<SettingsScreenKey>{
+                entry<SettingsScreenKey> {
                     SettingsScreen()
                 }
             }
