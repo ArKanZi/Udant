@@ -1,20 +1,30 @@
 package com.arkanzi.udant.core.navigation.helper
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
+import com.arkanzi.udant.R
 import com.arkanzi.udant.core.model.ScreenChrome
 import com.arkanzi.udant.core.navigation.DownloadScreenKey
 import com.arkanzi.udant.core.navigation.FeedScreenKey
+import com.arkanzi.udant.core.navigation.LibraryScreenKey
 import com.arkanzi.udant.core.navigation.Navigator
 import com.arkanzi.udant.core.navigation.SavedScreenKey
+import com.arkanzi.udant.core.navigation.SearchScreenKey
 import com.arkanzi.udant.core.navigation.SettingsScreenKey
 import com.arkanzi.udant.core.navigation.WebViewScreenKey
 
@@ -49,16 +59,34 @@ fun getScreenChrome(
                     )
                 }
 
-                IconButton(
-                    onClick = { navigator.openSettings() }
-                ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_setting),
 
-                    Icon(
-                        imageVector = Icons.Outlined.Settings,
-                        contentDescription = "Settings"
-                    )
-                }
+                    contentDescription = "Settings",
+
+                    tint = MaterialTheme.colorScheme.onSurface,
+
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable{
+                            navigator.openSettings()
+                        }
+
+
+
+                        .size(24.dp)
+                )
             },
+            showBottomNav = true
+        )
+
+        is SearchScreenKey -> ScreenChrome(
+            title = "Search",
+            showBottomNav = true
+        )
+
+        is LibraryScreenKey -> ScreenChrome(
+            title = "Library",
             showBottomNav = true
         )
 

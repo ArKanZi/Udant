@@ -7,3 +7,10 @@ fun String.toSafeFileName(): String {
         "_"
     )
 }
+
+fun String.toTitleCase(): String =
+    lowercase()
+        .split(" ")
+        .joinToString(" ") {
+            it.replaceFirstChar { char -> char.uppercase() }
+        }

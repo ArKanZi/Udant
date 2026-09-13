@@ -1,26 +1,14 @@
 package com.arkanzi.udant.feature.feed.ui
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.outlined.BookmarkBorder
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,17 +19,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
-import com.arkanzi.udant.core.model.Article
 import com.arkanzi.udant.core.navigation.Navigator
-import com.arkanzi.udant.core.ui.theme.UdantTheme
 import com.arkanzi.udant.feature.feed.ui.components.CategoryBar
 import com.arkanzi.udant.feature.feed.ui.components.FeedPage
 import com.arkanzi.udant.feature.feed.viewmodel.FeedViewModel
@@ -92,8 +73,9 @@ fun FeedScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        CategoryBar()
-
+        if(uiState.categories.size !=1){
+            CategoryBar(uiState.categories.map{it.name})
+        }
         when {
 
             uiState.isLoading &&
@@ -126,32 +108,45 @@ fun FeedScreen(
             }
 
             else -> {
-
-                VerticalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxSize()
-                ) { page ->
-
-                    val article = uiState.articles[page]
-
-                    FeedPage(
-                        article = article,
-                        isSaved = article.articleUrl in savedUrls,
-                        onArticleClick = navigator::openWebView,
-                        onSaveClick = {
-
-                            if (article.articleUrl in savedUrls) {
-
-                                viewModel.removeSavedArticle(
-                                    article.articleUrl
-                                )
-
-                            } else {
-
-                                viewModel.saveArticle(article)
-                            }
+                PullToRefreshBox(
+                    isRefreshing = uiState.isLoading,
+                    onRefresh = {
+                        viewModel.refreshFeed()
+                        scope.launch {
+                            pagerState.scrollToPage(0)
                         }
-                    )
+                    },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+
+                    VerticalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize()
+                    ) { page ->
+
+                        val article = uiState.articles[page]
+
+                        FeedPage(
+
+                            article = article,
+                            modifier = Modifier.padding(bottom = 78.dp),
+                            isSaved = article.articleUrl in savedUrls,
+                            onArticleClick = navigator::openWebView,
+                            onSaveClick = {
+
+                                if (article.articleUrl in savedUrls) {
+
+                                    viewModel.removeSavedArticle(
+                                        article.articleUrl
+                                    )
+
+                                } else {
+
+                                    viewModel.saveArticle(article)
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -171,172 +166,5 @@ fun FeedScreen(
                 color = Color.White
             )
         }
-
-        FloatingActionButton(
-
-            onClick = {
-
-                viewModel.refreshFeed()
-                scope.launch {
-                    pagerState.scrollToPage(0)
-                }
-
-            },
-
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(20.dp),
-
-            containerColor = Color(0xFF1A1A1A)
-
-        ) {
-
-            Icon(
-                imageVector = Icons.Outlined.Refresh,
-                contentDescription = "Refresh Feed",
-                tint = Color.White
-            )
-        }
     }
 }
-
-//@Composable
-//private fun FeedPage(
-//    article: Article,
-//    isSaved: Boolean,
-//    onArticleClick: (String) -> Unit,
-//    onSaveClick: () -> Unit
-//) {
-//
-//    Column(
-//        modifier = Modifier
-//            .fillMaxSize()
-//    ) {
-//        article.imageUrl?.let { imageUrl ->
-//
-//            AsyncImage(
-//                model = imageUrl,
-//                contentDescription = article.title,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .weight(0.5f),
-//
-//                contentScale = ContentScale.Crop
-//            )
-//        }
-//
-//        Box(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//
-//                .weight(0.5f)
-//        ) {
-//
-//            Column(
-//                modifier = Modifier
-//                    .fillMaxSize(),
-//
-//                verticalArrangement = Arrangement.spacedBy(12.dp)
-//            ) {
-//                Row {
-//                    Text(
-//                        text = article.sourceName,
-//                        style = MaterialTheme.typography.labelLarge,
-//                        color = MaterialTheme.colorScheme.outline
-//                    )
-//                    if (article.category != "Default") {
-//                        Text(
-//                            text = " - " + article.category,
-//                            style = MaterialTheme.typography.labelLarge,
-//                            color = MaterialTheme.colorScheme.outline
-//                        )
-//                    }
-//                    Spacer(modifier = Modifier.size(5.dp))
-//                    Icon(
-//                        imageVector = if (isSaved) {
-//                            Icons.Filled.Bookmark
-//                        } else {
-//                            Icons.Outlined.BookmarkBorder
-//                        },
-//
-//                        contentDescription = if (isSaved) {
-//                            "Remove Saved Article"
-//                        } else {
-//                            "Save Article"
-//                        },
-//
-//                        tint = if (isSaved) {
-//                            Color.White
-//                        } else {
-//                            Color.LightGray
-//                        },
-//
-//                        modifier = Modifier.clickable(
-//                            onClick = onSaveClick
-//                        )
-//                    )
-//                }
-//
-//
-//                Text(
-//                    modifier = Modifier.clickable(onClick = { onArticleClick(article.articleUrl) }),
-//                    text = article.title,
-//                    style = MaterialTheme.typography.headlineSmall,
-//                    fontWeight = FontWeight.Bold,
-//                    color = MaterialTheme.colorScheme.onSurface,
-//                    maxLines = 3,
-//                    overflow = TextOverflow.Ellipsis
-//                )
-//
-//                Text(
-//                    text = article.summary,
-//                    style = MaterialTheme.typography.bodyLarge,
-//                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-//                    maxLines = 6,
-//                    overflow = TextOverflow.Ellipsis
-//                )
-//
-//                Text(
-//                    text = article.author ?: "Unknown",
-//                    style = MaterialTheme.typography.labelMedium,
-//                    color = MaterialTheme.colorScheme.outline
-//                )
-//            }
-//
-//            Text(
-//                text = "Swipe for next",
-//                style = MaterialTheme.typography.labelSmall,
-//                color = MaterialTheme.colorScheme.outline,
-//                modifier = Modifier
-//                    .align(Alignment.BottomCenter)
-//                    .padding(bottom = 16.dp)
-//            )
-//        }
-//    }
-//}
-//
-//@Preview(showBackground = true)
-//@Composable
-//fun FeedScreenPreview() {
-//
-//    UdantTheme {
-//
-//        FeedPage(
-//            article = Article(
-//                articleId = 1,
-//                title = "Sample Article Title That Might Be Long and Need Several Lines to Display Correct",
-//                summary = "This is a sample summary for the article. It provides a brief overview of what the article is about and should be long enough to test the max lines property of the text component.",
-//                imageUrl = "https://example.com/image.jpg",
-//                articleUrl = "https://example.com/article",
-//                publishedAt = System.currentTimeMillis(),
-//                sourceName = "Tech News",
-//                author = "John Doe",
-//                category = "World",
-//                savedAt = 0
-//            ),
-//            onArticleClick = {},
-//            isSaved = true,
-//            onSaveClick = {}
-//        )
-//    }
-//}

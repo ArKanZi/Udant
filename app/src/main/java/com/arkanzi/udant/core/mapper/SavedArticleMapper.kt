@@ -3,7 +3,7 @@ package com.arkanzi.udant.core.mapper
 import com.arkanzi.udant.core.database.entity.SavedArticleEntity
 import com.arkanzi.udant.core.model.Article
 
-fun SavedArticleEntity.toArticle(): Article {
+fun SavedArticleEntity.toModel(): Article {
 
     return Article(
         articleId = savedArticleId,

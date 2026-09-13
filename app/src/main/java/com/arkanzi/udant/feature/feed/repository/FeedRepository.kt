@@ -2,12 +2,12 @@ package com.arkanzi.udant.feature.feed.repository
 
 import android.util.Log
 import com.arkanzi.udant.core.database.dao.ArticleDao
-import com.arkanzi.udant.core.mapper.toArticle
+import com.arkanzi.udant.core.database.dao.FeedCategoryDao
+import com.arkanzi.udant.core.mapper.toModel
 import com.arkanzi.udant.core.mapper.toArticleEntities
 import com.arkanzi.udant.core.model.Article
-import com.arkanzi.udant.core.network.ArticleEnricher
-import com.arkanzi.udant.core.network.RssFeedDataSource
-import com.arkanzi.udant.feature.feed.data.source.toiFeedSources
+import com.arkanzi.udant.core.model.FeedCategory
+import com.arkanzi.udant.extension.thetimesofindia.TheTimesOfIndiaMain
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,27 +22,41 @@ class FeedRepository @Inject constructor(
 
     private val articleDao: ArticleDao,
 
-    private val rssFeedDataSource: RssFeedDataSource,
+    private val feedCategoryDao: FeedCategoryDao,
 
-    private val articleEnricher: ArticleEnricher
-
+    private val toiMain: TheTimesOfIndiaMain,
 ) {
-    private val feedSources = toiFeedSources
-    private var currentFeedIndex = 0
-    private val repositoryScope = CoroutineScope(
-        SupervisorJob() + Dispatchers.IO
-    )
+    private val repositoryScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun getArticles(): Flow<List<Article>> {
 
-        return articleDao
+        val articles = articleDao
             .getAllArticles()
             .map { entities ->
 
                 entities.map { entity ->
 
-                    entity.toArticle()
+                    entity.toModel()
                 }
+            }
+
+        repositoryScope.launch {
+            articleDao
+                .getArticlesNeedingEnrichment()
+                .forEach { articleEntity ->
+                    enrichIfNeeded(articleEntity.toModel())
+                }
+        }
+
+        return articles
+    }
+
+    fun getCategories(): Flow<List<FeedCategory>> {
+        return feedCategoryDao
+            .getCategories()
+            .map { entities ->
+                entities.map { it.toModel() }
             }
     }
 
@@ -50,11 +64,18 @@ class FeedRepository @Inject constructor(
 
         return try {
 
-            val articles = fetchFeed()
+            val articles = toiMain.fetch()
 
             if (articles.isNotEmpty()) {
                 articleDao.replaceArticles(articles.toArticleEntities())
-                enrichArticles(articles)
+
+                repositoryScope.launch {
+                    articles
+                        .forEach { article->
+                            enrichIfNeeded(article)
+                        }
+                }
+
                 Result.success(Unit)
             } else {
                 Result.failure(IllegalStateException("Feed returned no articles"))
@@ -76,11 +97,16 @@ class FeedRepository @Inject constructor(
 
         return try {
 
-            val articles = fetchFeed()
+            val articles = toiMain.fetch()
 
             articleDao.insertArticles(articles.toArticleEntities())
 
-            enrichArticles(articles)
+            repositoryScope.launch {
+                articles
+                    .forEach { article->
+                        enrichIfNeeded(article)
+                    }
+            }
 
             Result.success(Unit)
 
@@ -95,62 +121,25 @@ class FeedRepository @Inject constructor(
         }
     }
 
-    private suspend fun fetchFeed(): List<Article> {
+    private suspend fun enrichIfNeeded(article: Article) {
+        val needsImage = article.imageUrl.isNullOrBlank()
+        val needsSummary = article.summary.isBlank()
+        val needsAuthor = article.author.isNullOrBlank()
+        if (needsImage || needsSummary || needsAuthor) {
+            try {
+                val enrichedArticle = toiMain.enrich(article)
 
-        val source = feedSources[currentFeedIndex]
-
-        val articles = rssFeedDataSource
-            .fetchArticles(source.sourceUrl)
-            .map { article ->
-
-                article.copy(
-                    sourceName = source.sourceName,
-                    category = source.category
+                articleDao.updateEnrichment(
+                    articleUrl = enrichedArticle.articleUrl,
+                    imageUrl = enrichedArticle.imageUrl,
+                    summary = enrichedArticle.summary,
+                    author = enrichedArticle.author
                 )
-            }
-        currentFeedIndex++
-
-        return articles
-    }
-
-    private fun enrichArticles(
-        articles: List<Article>
-    ) {
-
-        articles.forEach { article ->
-
-            val needsImage =
-                article.imageUrl.isNullOrBlank()
-
-            val needsSummary =
-                article.summary.isBlank()
-
-            if (
-                needsImage ||
-                needsSummary
-            ) {
-
-                repositoryScope.launch {
-
-                    try {
-
-                        val enrichedArticle =
-                            articleEnricher.enrich(article)
-
-                        articleDao.updateEnrichment(
-                            articleUrl = enrichedArticle.articleUrl,
-                            imageUrl = enrichedArticle.imageUrl,
-                            summary = enrichedArticle.summary
-                        )
-
-                    } catch (exception: Exception) {
-
-                        Log.e(
-                            "ENRICH_ERROR",
-                            exception.stackTraceToString()
-                        )
-                    }
-                }
+            } catch (e: Exception) {
+                Log.e(
+                    "ENRICH_ERROR",
+                    e.stackTraceToString()
+                )
             }
         }
     }

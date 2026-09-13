@@ -3,7 +3,7 @@ package com.arkanzi.udant.core.mapper
 import com.arkanzi.udant.core.database.entity.ArticleEntity
 import com.arkanzi.udant.core.model.Article
 
-fun ArticleEntity.toArticle(): Article {
+fun ArticleEntity.toModel(): Article {
 
     return Article(
         articleId = articleId,
@@ -18,7 +18,7 @@ fun ArticleEntity.toArticle(): Article {
     )
 }
 
-fun Article.toArticleEntity(): ArticleEntity {
+fun Article.toEntity(): ArticleEntity {
 
     return ArticleEntity(
         articleId = articleId,
@@ -37,6 +37,6 @@ fun List<Article>.toArticleEntities(): List<ArticleEntity> {
 
     return map { article ->
 
-        article.toArticleEntity()
+        article.toEntity()
     }
 }

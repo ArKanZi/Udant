@@ -24,13 +24,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
 import com.arkanzi.udant.R
+import com.arkanzi.udant.core.navigation.FeedScreenKey
+import com.arkanzi.udant.core.navigation.LibraryScreenKey
+import com.arkanzi.udant.core.navigation.SearchScreenKey
 
 @Composable
 fun UdantFloatingNavBar(
+    selectedKey: NavKey?,
+    onHomeClick: () -> Unit,
+    onSearchClick: () -> Unit,
+    onLibraryClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val selected = true
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -47,13 +54,13 @@ fun UdantFloatingNavBar(
             windowInsets = WindowInsets(0, 0, 0, 0),
         ) {
             NavigationBarItem(
-                selected = selected,
-                onClick = {},
+                selected = selectedKey == FeedScreenKey,
+                onClick = onHomeClick,
                 icon = {
                     Icon(
 
                         painter = painterResource(
-                            if (selected) {
+                            if (selectedKey == FeedScreenKey) {
                                 R.drawable.ic_home_selected
                             } else {
                                 R.drawable.ic_home
@@ -66,7 +73,7 @@ fun UdantFloatingNavBar(
                 enabled = true,
                 label = { Text(
                     text = "Home",
-                    fontWeight = if (selected) {
+                    fontWeight = if (selectedKey == FeedScreenKey) {
                         FontWeight.SemiBold
                     } else {
                         FontWeight.Normal
@@ -83,8 +90,8 @@ fun UdantFloatingNavBar(
                     ),
             )
             NavigationBarItem(
-                selected = false,
-                onClick = {},
+                selected = selectedKey == SearchScreenKey,
+                onClick = onSearchClick,
                 icon = {
                     Icon(
                         painter = painterResource(R.drawable.ic_search),
@@ -95,7 +102,7 @@ fun UdantFloatingNavBar(
                 enabled = true,
                 label = { Text(
                     text = "Search",
-                    fontWeight = if (selected) {
+                    fontWeight = if (selectedKey == SearchScreenKey) {
                         FontWeight.SemiBold
                     } else {
                         FontWeight.Normal
@@ -112,8 +119,8 @@ fun UdantFloatingNavBar(
                     ),
             )
             NavigationBarItem(
-                selected = false,
-                onClick = {},
+                selected = selectedKey == LibraryScreenKey,
+                onClick = onLibraryClick,
                 icon = {
                     Icon(
                         painter = painterResource(R.drawable.ic_library),
@@ -124,7 +131,7 @@ fun UdantFloatingNavBar(
                 enabled = true,
                 label = { Text(
                     text = "Library",
-                    fontWeight = if (selected) {
+                    fontWeight = if (selectedKey == LibraryScreenKey) {
                         FontWeight.SemiBold
                     } else {
                         FontWeight.Normal
@@ -147,5 +154,11 @@ fun UdantFloatingNavBar(
 @Preview(showBackground = true)
 @Composable
 private fun UdantFloatingNavBarPreview() {
-    UdantFloatingNavBar()
+    UdantFloatingNavBar(
+        selectedKey = SearchScreenKey,
+        onHomeClick = {},
+        onSearchClick = {},
+        onLibraryClick = {},
+
+    )
 }

@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            Log.d("Compose", "destination = $notificationDestination")
+
             UdantTheme {
                 AppNavigation(
                     destination = notificationDestination,

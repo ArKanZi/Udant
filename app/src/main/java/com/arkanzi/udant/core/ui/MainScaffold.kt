@@ -18,13 +18,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
 import com.arkanzi.udant.core.model.ScreenChrome
+import com.arkanzi.udant.core.navigation.FeedScreenKey
+import com.arkanzi.udant.core.navigation.UdantNavKey
 import com.arkanzi.udant.core.ui.components.UdantDefaultAppBar
 import com.arkanzi.udant.core.ui.components.UdantFloatingNavBar
 
 @Composable
 fun MainScaffold(
     screenChrome: ScreenChrome?,
+    selectedKey: NavKey?,
+    onHomeClick: () -> Unit,
+    onSearchClick: () -> Unit,
+    onLibraryClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
     Box(
@@ -79,6 +86,10 @@ fun MainScaffold(
             if (showBottomNav) {
 
                 UdantFloatingNavBar(
+                    selectedKey = selectedKey,
+                    onHomeClick = onHomeClick,
+                    onSearchClick = onSearchClick,
+                    onLibraryClick = onLibraryClick,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(
@@ -97,6 +108,10 @@ fun MainScaffold(
 fun MainScaffoldPreview() {
     MainScaffold(
         content = {},
+        selectedKey = FeedScreenKey,
+        onHomeClick = {},
+        onSearchClick = {},
+        onLibraryClick = {},
         screenChrome = ScreenChrome(
             title = "Udant",
             showBottomNav = true,

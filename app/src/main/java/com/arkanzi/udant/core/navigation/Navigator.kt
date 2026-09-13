@@ -11,10 +11,44 @@ class Navigator(
         backStack.removeLastOrNull()
     }
 
+    fun openHome(){
+        if (
+            backStack.lastOrNull() != FeedScreenKey
+        ) {
+            backStack.add(
+                FeedScreenKey
+            )
+        }
+    }
+
+    fun openSearch() {
+        if (
+            backStack.lastOrNull() != SearchScreenKey
+        ) {
+            backStack.add(
+                SearchScreenKey
+            )
+        }
+    }
+
+    fun openLibrary() {
+        if (
+            backStack.lastOrNull() != LibraryScreenKey
+        ) {
+            backStack.add(
+                LibraryScreenKey
+            )
+        }
+    }
+
     fun openWebView(url: String) {
-        backStack.add(
-            WebViewScreenKey(url)
-        )
+        if (
+            backStack.lastOrNull() != SettingsScreenKey
+        ) {
+            backStack.add(
+                WebViewScreenKey(url)
+            )
+        }
     }
 
     fun openSettings() {
@@ -39,7 +73,7 @@ class Navigator(
         }
     }
 
-    fun openDownload(){
+    fun openDownload() {
         if (
             backStack.lastOrNull() != DownloadScreenKey
         ) {

@@ -11,7 +11,9 @@ import com.arkanzi.udant.core.navigation.helper.getScreenChrome
 import com.arkanzi.udant.core.ui.MainScaffold
 import com.arkanzi.udant.core.webview.WebViewScreen
 import com.arkanzi.udant.feature.feed.ui.FeedScreen
+import com.arkanzi.udant.feature.library.ui.LibraryScreen
 import com.arkanzi.udant.feature.savedArticles.ui.SavedArticleScreen
+import com.arkanzi.udant.feature.search.ui.SearchScreen
 import com.arkanzi.udant.feature.settings.ui.SettingsScreen
 
 @Composable
@@ -42,7 +44,11 @@ fun AppNavigation(destination: String?, onDestinationConsumed: () -> Unit) {
     }
 
     MainScaffold(
-        screenChrome = screenChrome
+        screenChrome = screenChrome,
+        selectedKey = currentKey,
+        onHomeClick = { navigator.openHome() },
+        onSearchClick = { navigator.openSearch() },
+        onLibraryClick = { navigator.openLibrary() }
     ) {
         NavDisplay(
             backStack = backStack,
@@ -51,6 +57,14 @@ fun AppNavigation(destination: String?, onDestinationConsumed: () -> Unit) {
 
                 entry<FeedScreenKey> {
                     FeedScreen(navigator = navigator)
+                }
+
+                entry<SearchScreenKey> {
+                    SearchScreen()
+                }
+
+                entry <LibraryScreenKey>{
+                    LibraryScreen()
                 }
 
                 entry<WebViewScreenKey> {

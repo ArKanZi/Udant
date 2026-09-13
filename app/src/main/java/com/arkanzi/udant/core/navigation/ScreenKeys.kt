@@ -8,6 +8,10 @@ sealed interface UdantNavKey : NavKey
 
 @Serializable
 data object FeedScreenKey: UdantNavKey
+@Serializable
+data object SearchScreenKey: UdantNavKey
+@Serializable
+data object LibraryScreenKey: UdantNavKey
 
 @Serializable
 data class WebViewScreenKey(

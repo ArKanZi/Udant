@@ -1,7 +1,7 @@
 package com.arkanzi.udant.feature.savedArticles.repository
 
 import com.arkanzi.udant.core.database.dao.SavedArticleDao
-import com.arkanzi.udant.core.mapper.toArticle
+import com.arkanzi.udant.core.mapper.toModel
 import com.arkanzi.udant.core.mapper.toSavedArticleEntity
 import com.arkanzi.udant.core.model.ArchiveStatus
 import com.arkanzi.udant.core.model.Article
@@ -25,7 +25,7 @@ class SavedArticleRepository @Inject constructor(
 
                 entities.map { entity ->
 
-                    entity.toArticle()
+                    entity.toModel()
                 }
             }
     }

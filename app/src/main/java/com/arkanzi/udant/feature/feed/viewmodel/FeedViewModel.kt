@@ -53,8 +53,23 @@ class FeedViewModel @Inject constructor(
         _savedUrls.asStateFlow()
 
     init {
+        observeCategories()
         observeSavedUrls()
         startupRefresh()
+    }
+
+    private fun observeCategories() {
+        viewModelScope.launch {
+            feedRepository
+                .getCategories()
+                .collectLatest { categories ->
+                    _uiState.update {
+                        it.copy(
+                            categories = categories
+                        )
+                    }
+                }
+        }
     }
 
     // Feed Startup

@@ -31,14 +31,26 @@ interface ArticleDao {
     }
 
     @Query("""
+    SELECT * FROM articles
+    WHERE imageUrl IS NULL
+       OR imageUrl = ''
+       OR summary = ''
+       OR author IS NULL
+       OR author = ''
+""")
+    suspend fun getArticlesNeedingEnrichment(): List<ArticleEntity>
+
+    @Query("""
     UPDATE articles
     SET imageUrl = :imageUrl,
-        summary = :summary
+        summary = :summary,
+        author = :author
     WHERE articleUrl = :articleUrl
 """)
     suspend fun updateEnrichment(
         articleUrl: String,
         imageUrl: String?,
-        summary: String
+        summary: String,
+        author:String?
     )
 }

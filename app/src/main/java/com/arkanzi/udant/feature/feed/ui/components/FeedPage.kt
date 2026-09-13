@@ -29,18 +29,20 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.arkanzi.udant.R
 import com.arkanzi.udant.core.model.Article
+import com.arkanzi.udant.core.model.FeedCategory
 import com.arkanzi.udant.core.ui.theme.UdantTheme
-
+import com.arkanzi.udant.core.util.formatRelativeTime
 @Composable
 fun FeedPage(
     article: Article,
+    modifier: Modifier= Modifier,
     isSaved: Boolean,
     onArticleClick: (String) -> Unit,
     onSaveClick: () -> Unit
 ) {
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
     ) {
         Row(
@@ -70,7 +72,7 @@ fun FeedPage(
                 modifier = Modifier
                     .fillMaxSize(),
 
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -148,10 +150,17 @@ fun FeedPage(
                     maxLines = 9,
                     overflow = TextOverflow.Ellipsis
                 )
-
                 Text(
-                    text = article.author ?: "Unknown",
-                    style = MaterialTheme.typography.labelMedium,
+                    text = buildString {
+                        append(formatRelativeTime(article.publishedAt))
+
+                        article.author
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let {
+                                append(" | By $it")
+                            }
+                    },
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline
                 )
             }
@@ -165,6 +174,7 @@ fun FeedPage(
                     .padding(bottom = 16.dp)
             )
         }
+
     }
 }
 
@@ -183,7 +193,7 @@ fun FeedScreenPreview() {
                 articleUrl = "https://example.com/article",
                 publishedAt = System.currentTimeMillis(),
                 sourceName = "Tech News",
-                author = "John Doe",
+                author = "John DOE",
                 category = "World",
                 savedAt = 0
             ),
