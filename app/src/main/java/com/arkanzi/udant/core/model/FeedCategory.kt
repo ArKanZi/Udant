@@ -1,4 +1,10 @@
 package com.arkanzi.udant.core.model
 
-class FeedCategory {
-}
+data class FeedCategory(
+    val id: String,
+
+    val name: String,
+
+    val extensionId: String
+
+)
