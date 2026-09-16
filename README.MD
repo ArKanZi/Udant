@@ -184,7 +184,7 @@ Udant follows an MVVM architecture combined with feature-specific managers and a
 
 ---
 
-## Phase 2.5 — Background Infrastructure 🚧 In Progress
+## Phase 2.5 — Background Infrastructure ✅ Completed
 
 ### Completed
 
@@ -198,25 +198,26 @@ Udant follows an MVVM architecture combined with feature-specific managers and a
 - Archive notification system
 - Event-driven communication
 - Feature-specific job handlers
-
-### In Progress
-
 - Archive reliability improvements
 - Queue recovery
 - Progress reporting refinements
 - Error recovery
-- Notification polish
+
+### On hold
+- Notification polish ⚠️
 
 ---
 
 # Roadmap
 
-## Phase 3 — User Experience
+## Phase 3 — User Experience 🚧 In Progress 
+
+### In Progress
+- UI/UX improvements
 
 - Theme settings
 - Reader preferences
 - Archive preferences
-- UI/UX improvements
 
 ---
 
