@@ -1,6 +1,10 @@
 package com.arkanzi.udant.feature.feed.viewmodel
 
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arkanzi.udant.core.model.Article
@@ -22,6 +26,25 @@ class FeedViewModel @Inject constructor(
     private val savedArticleRepository: SavedArticleRepository
 
 ) : ViewModel() {
+
+    private val _selectedCategory = MutableStateFlow("My Feed")
+    val selectedCategory = _selectedCategory.asStateFlow()
+
+    fun selectCategory(category: String) {
+        _selectedCategory.value = category
+
+        val hasArticles = latestArticles.any {
+            it.category == category
+        }
+
+        if (category != "My Feed" && !hasArticles) {
+            viewModelScope.launch {
+                feedRepository.fetchCategory(category)
+            }
+        }
+
+        updateVisibleFeed(latestArticles)
+    }
 
     // latest articles
     private var latestArticles =
@@ -112,47 +135,40 @@ class FeedViewModel @Inject constructor(
     private fun updateVisibleFeed(
         articles: List<Article>
     ) {
-
         if (visibleOrder.isEmpty()) {
-
             visibleOrder.addAll(
                 articles.map {
                     it.articleUrl
                 }
             )
-
         } else {
+            val newUrls = articles
+                .map { it.articleUrl }
+                .filter { url ->
+                    url !in visibleOrder
+                }
 
-            val newUrls =
-                articles
-                    .map {
-                        it.articleUrl
-                    }
-                    .filter { url ->
-
-                        url !in visibleOrder
-                    }
-
-            visibleOrder.addAll(
-                newUrls
-            )
+            visibleOrder.addAll(newUrls)
         }
 
-        val articleMap =
-            articles.associateBy {
-                it.articleUrl
-            }
+        val articleMap = articles.associateBy {
+            it.articleUrl
+        }
 
-        val visibleArticles =
-            visibleOrder.mapNotNull { url ->
-
+        val visibleArticles = visibleOrder
+            .mapNotNull { url ->
                 articleMap[url]
             }
+            .filter { article ->
+                _selectedCategory.value == "My Feed" ||
+                        article.category == _selectedCategory.value
+            }
 
-        _uiState.value =
-            _uiState.value.copy(
+        _uiState.update {
+            it.copy(
                 articles = visibleArticles
             )
+        }
     }
 
     // Feed Actions

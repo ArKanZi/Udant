@@ -1,6 +1,7 @@
 package com.arkanzi.udant.core.database.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Upsert
 import com.arkanzi.udant.core.database.entity.FeedCategoryEntity
@@ -16,4 +17,11 @@ interface FeedCategoryDao {
     suspend fun upsertCategories(
         categories: List<FeedCategoryEntity>
     )
+
+    @Insert
+    suspend fun insertCategories(
+        categories: List<FeedCategoryEntity>
+    )
+
+
 }

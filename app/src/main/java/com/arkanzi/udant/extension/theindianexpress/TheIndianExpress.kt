@@ -1,12 +1,14 @@
-package com.arkanzi.udant.extension.thetimesofindia
+package com.arkanzi.udant.extension.theindianexpress
 
 import android.util.Log
 import com.arkanzi.udant.core.model.Article
 import com.arkanzi.udant.core.model.FeedCategory
+import com.arkanzi.udant.extension.thetimesofindia.RssFeedDataSource
 import com.arkanzi.udant.extension.thetimesofindia.enricher.ArticleEnricher
+import com.arkanzi.udant.extension.thetimesofindia.toiSourceDetails
 import javax.inject.Inject
 
-class TheTimesOfIndiaMain @Inject constructor(
+class TheIndianExpress @Inject constructor(
     private val rssFeedDataSource: RssFeedDataSource,
     private val articleEnricher: ArticleEnricher
 ) {
@@ -28,6 +30,7 @@ class TheTimesOfIndiaMain @Inject constructor(
         val articles = rssFeedDataSource
             .fetchArticles(source.sourceUrl)
             .map { article ->
+
                 article.copy(
                     sourceName = source.sourceName,
                     category = source.category
@@ -35,6 +38,7 @@ class TheTimesOfIndiaMain @Inject constructor(
             }
 
         currentFeedIndex++
+
 
         return articles
     }

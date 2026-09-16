@@ -17,19 +17,22 @@ import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun CategoryBar(
-    categories: List<String>
-) {
-    var selectedCategory by rememberSaveable {
-        mutableStateOf("My Feed")
-    }
-    Box(modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center){
+    categories: List<String>,
+    selectedCategory: String,
+    onCategorySelected: (String) -> Unit
+){
+
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ){
         LazyRow {
             items(categories){ category ->
                 CategoryItem(
                     category = category,
                     selected = category == selectedCategory,
-                    action = { selectedCategory = category }
+                    action = {
+                        onCategorySelected(category) }
                 )
             }
         }
@@ -41,5 +44,28 @@ fun CategoryBar(
 @Preview(showBackground= true)
 @Composable
 fun CategoryBarPreview() {
-    CategoryBar(listOf("My Feed","Top Stories","Most Recent","India","World","Business","Sports","Cricket","Tech","Science","Environment","Entertainment","Life & Style","Education","US","Most Read","Most Shared","Most Commented",))
+    CategoryBar(
+        listOf(
+            "My Feed",
+            "Top Stories",
+            "Most Recent",
+            "India",
+            "World",
+            "Business",
+            "Sports",
+            "Cricket",
+            "Tech",
+            "Science",
+            "Environment",
+            "Entertainment",
+            "Life & Style",
+            "Education",
+            "US",
+            "Most Read",
+            "Most Shared",
+            "Most Commented",
+        ),
+        selectedCategory = "My Feed",
+        onCategorySelected = {}
+    )
 }

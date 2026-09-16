@@ -1,7 +1,6 @@
 package com.arkanzi.udant.core.model
 
-data class FeedCategory(
+data class Extension(
+    val id: String,
     val name: String,
-
-
 )

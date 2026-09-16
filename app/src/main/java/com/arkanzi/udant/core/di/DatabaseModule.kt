@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.arkanzi.udant.core.database.UdantDatabase
 import com.arkanzi.udant.core.database.dao.ArticleDao
 import com.arkanzi.udant.core.database.dao.DownloadJobDao
+import com.arkanzi.udant.core.database.dao.ExtensionDao
 import com.arkanzi.udant.core.database.dao.FeedCategoryDao
 import com.arkanzi.udant.core.database.dao.SavedArticleDao
 import dagger.Module
@@ -48,6 +49,15 @@ object DatabaseModule {
     ): FeedCategoryDao {
 
         return database.feedCategoryDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideExtensionDao(
+        database: UdantDatabase
+    ): ExtensionDao {
+
+        return database.extensionDao()
     }
 
     @Provides

@@ -23,7 +23,7 @@ class UdantApp : Application() {
 
         downloadNotificationObserver.start()
         CoroutineScope(Dispatchers.IO).launch {
-            extensionManager.syncCategories()
+            extensionManager.syncExtensions()
         }
 
         NotificationChannels

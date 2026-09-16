@@ -52,11 +52,26 @@ class FeedRepository @Inject constructor(
         return articles
     }
 
+    suspend fun fetchCategory(category: String) {
+            val articles = toiMain.fetchCategory(category)
+            articleDao.insertArticles(articles.toArticleEntities())
+            articleDao
+                .getArticlesNeedingEnrichment()
+                .forEach { articleEntity ->
+                    enrichIfNeeded(articleEntity.toModel())
+                }
+    }
+
+
     fun getCategories(): Flow<List<FeedCategory>> {
         return feedCategoryDao
             .getCategories()
             .map { entities ->
-                entities.map { it.toModel() }
+                entities
+                    .groupBy { it.name }
+                    .map { (_, categories) ->
+                        categories.first().toModel()
+                    }
             }
     }
 
@@ -71,7 +86,7 @@ class FeedRepository @Inject constructor(
 
                 repositoryScope.launch {
                     articles
-                        .forEach { article->
+                        .forEach { article ->
                             enrichIfNeeded(article)
                         }
                 }
@@ -103,7 +118,7 @@ class FeedRepository @Inject constructor(
 
             repositoryScope.launch {
                 articles
-                    .forEach { article->
+                    .forEach { article ->
                         enrichIfNeeded(article)
                     }
             }
