@@ -1,10 +1,11 @@
-package com.arkanzi.udant.feature.savedArticles.repository
+package com.arkanzi.udant.feature.library.repository
 
 import com.arkanzi.udant.core.database.dao.SavedArticleDao
 import com.arkanzi.udant.core.mapper.toModel
 import com.arkanzi.udant.core.mapper.toSavedArticleEntity
 import com.arkanzi.udant.core.model.ArchiveStatus
 import com.arkanzi.udant.core.model.Article
+import com.arkanzi.udant.feature.library.model.LibraryCollectionTarget
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -17,17 +18,27 @@ class SavedArticleRepository @Inject constructor(
 
 ) {
 
-    fun getSavedArticles(): Flow<List<Article>> {
+    fun getSavedArticles(
+        target: LibraryCollectionTarget
+    ): Flow<List<Article>> {
 
-        return savedArticleDao
-            .getAllSavedArticles()
-            .map { entities ->
+        val articles = when (target) {
 
-                entities.map { entity ->
+            LibraryCollectionTarget.Default ->
+                savedArticleDao.getDefaultSavedArticles()
 
-                    entity.toModel()
-                }
+            is LibraryCollectionTarget.User ->
+                savedArticleDao.getSavedArticlesInCollection(
+                    collectionId = target.collectionId
+                )
+        }
+
+        return articles.map { entities ->
+
+            entities.map { entity ->
+                entity.toModel()
             }
+        }
     }
 
     suspend fun saveArticle(
@@ -53,7 +64,6 @@ class SavedArticleRepository @Inject constructor(
         return savedArticleDao
             .getSavedUrls()
             .map { urls ->
-
                 urls.toSet()
             }
     }
@@ -63,6 +73,7 @@ class SavedArticleRepository @Inject constructor(
         archiveUri: String?,
         archiveStatus: ArchiveStatus
     ) {
+
         savedArticleDao.updateArchive(
             savedArticleId = savedArticleId,
             archiveUri = archiveUri,

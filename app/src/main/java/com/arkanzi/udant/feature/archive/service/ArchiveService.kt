@@ -2,12 +2,14 @@ package com.arkanzi.udant.feature.archive.service
 
 import android.app.Service
 import android.content.Intent
+import android.os.Build
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.annotation.RequiresApi
 import com.arkanzi.udant.core.job.download.dispatcher.DownloadDispatcher
 import com.arkanzi.udant.core.job.download.model.DownloadProgressState
 import com.arkanzi.udant.core.job.download.notification.DownloadNotification
@@ -55,6 +57,7 @@ class ArchiveService : Service() {
     private var cancelRequested = false
 
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onStartCommand(
         intent: Intent?,
         flags: Int,
@@ -121,6 +124,7 @@ class ArchiveService : Service() {
         super.onDestroy()
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun archiveArticle(
         jobId: String,
         articleUrl: String

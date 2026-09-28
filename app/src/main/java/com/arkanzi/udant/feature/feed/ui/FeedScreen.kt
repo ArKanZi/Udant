@@ -13,17 +13,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.rememberNavBackStack
+import com.arkanzi.udant.core.navigation.FeedScreenKey
 import com.arkanzi.udant.core.navigation.Navigator
 import com.arkanzi.udant.feature.feed.ui.components.CategoryBar
 import com.arkanzi.udant.feature.feed.ui.components.FeedPage
@@ -179,4 +180,15 @@ fun FeedScreen(
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun FeedScreenPreview() {
+    val startKey = FeedScreenKey
+    val backStack = rememberNavBackStack(startKey)
+    val navigator = remember { Navigator(backStack) }
+    FeedScreen(
+        navigator = navigator
+    )
 }

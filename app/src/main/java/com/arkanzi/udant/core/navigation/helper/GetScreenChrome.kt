@@ -48,17 +48,6 @@ fun getScreenChrome(
                     )
                 }
 
-
-                IconButton(
-                    onClick = { navigator.openSaved() }
-                ) {
-
-                    Icon(
-                        imageVector = Icons.Outlined.BookmarkBorder,
-                        contentDescription = "Saved Articles"
-                    )
-                }
-
                 Icon(
                     painter = painterResource(R.drawable.ic_setting),
 
@@ -74,7 +63,7 @@ fun getScreenChrome(
 
 
 
-                        .size(24.dp)
+                        .size(20.dp)
                 )
             },
             showBottomNav = true
@@ -87,44 +76,15 @@ fun getScreenChrome(
 
         is LibraryScreenKey -> ScreenChrome(
             title = "Library",
+            contentPadding = PaddingValues(horizontal = 0.dp),
             showBottomNav = true
         )
 
         is SavedScreenKey -> ScreenChrome(
+            onBackClick = {navigator.goBack()},
+            contentPadding = PaddingValues(horizontal = 0.dp),
             title = "Saved",
-            actions = {
-                IconButton(
-                    onClick = { navigator.openDownload() }
-                ) {
-
-                    Icon(
-                        imageVector = Icons.Outlined.Download,
-                        contentDescription = "Saved Articles"
-                    )
-                }
-
-
-                IconButton(
-                    onClick = { navigator.openSaved() }
-                ) {
-
-                    Icon(
-                        imageVector = Icons.Outlined.BookmarkBorder,
-                        contentDescription = "Saved Articles"
-                    )
-                }
-
-                IconButton(
-                    onClick = { navigator.openSettings() }
-                ) {
-
-                    Icon(
-                        imageVector = Icons.Outlined.Settings,
-                        contentDescription = "Settings"
-                    )
-                }
-            },
-            showBottomNav = true
+            showBottomNav = false
         )
 
         is SettingsScreenKey -> ScreenChrome(
@@ -148,7 +108,7 @@ fun getScreenChrome(
 
 
                 IconButton(
-                    onClick = { navigator.openSaved() }
+                    onClick = { navigator.openSavedArticles() }
                 ) {
 
                     Icon(

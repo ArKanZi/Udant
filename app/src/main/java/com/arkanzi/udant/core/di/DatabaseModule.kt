@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import com.arkanzi.udant.core.database.UdantDatabase
 import com.arkanzi.udant.core.database.dao.ArticleDao
+import com.arkanzi.udant.core.database.dao.ArticleCollectionDao
+import com.arkanzi.udant.core.database.dao.CollectionDao
 import com.arkanzi.udant.core.database.dao.DownloadJobDao
 import com.arkanzi.udant.core.database.dao.ExtensionDao
 import com.arkanzi.udant.core.database.dao.FeedCategoryDao
@@ -40,6 +42,24 @@ object DatabaseModule {
     ): ArticleDao {
 
         return database.articleDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCollectionDao(
+        database: UdantDatabase
+    ): CollectionDao {
+
+        return database.collectionDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideArticleCollectionDao(
+        database: UdantDatabase
+    ): ArticleCollectionDao {
+
+        return database.articleCollectionDao()
     }
 
     @Provides

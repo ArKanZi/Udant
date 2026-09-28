@@ -26,12 +26,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.arkanzi.udant.R
 import com.arkanzi.udant.core.model.Article
-import com.arkanzi.udant.core.model.FeedCategory
 import com.arkanzi.udant.core.ui.theme.UdantTheme
-import com.arkanzi.udant.core.util.formatRelativeTime
+import com.arkanzi.udant.core.util.formatRelativeTimeShort
+
 @Composable
 fun FeedPage(
     article: Article,
@@ -48,7 +49,7 @@ fun FeedPage(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp)
+                .padding(vertical = 4.dp)
                 .aspectRatio(1.37f)
                 .clip(RoundedCornerShape(16.dp))
         ) {
@@ -72,7 +73,7 @@ fun FeedPage(
                 modifier = Modifier
                     .fillMaxSize(),
 
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -84,11 +85,14 @@ fun FeedPage(
                             painter = painterResource(R.drawable.ic_fav_icon_toi),
                             contentDescription = "sourceIcon",
                             tint = Color.Unspecified,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                         Text(
-                            text = article.sourceName,
-                            style = MaterialTheme.typography.labelMedium,
+                            text = buildString {
+                                append(article.sourceName)
+                                append(" · "+ formatRelativeTimeShort(article.publishedAt))
+                            },
+                            style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.outline
                         )
                     }
@@ -112,7 +116,7 @@ fun FeedPage(
                                 .clickable(
                                     onClick = onSaveClick
                                 )
-                                .size(20.dp)
+                                .size(16.dp)
                         )
                         Spacer(modifier = Modifier.size(12.dp))
                         Icon(
@@ -126,7 +130,7 @@ fun FeedPage(
                                 .clickable(
                                     onClick = {}
                                 )
-                                .size(20.dp)
+                                .size(16.dp)
                         )
                     }
 
@@ -136,7 +140,7 @@ fun FeedPage(
                 Text(
                     modifier = Modifier.clickable(onClick = { onArticleClick(article.articleUrl) }),
                     text = article.title,
-                    style = MaterialTheme.typography.titleLargeEmphasized,
+                    style = MaterialTheme.typography.titleMediumEmphasized,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 3,
@@ -145,23 +149,31 @@ fun FeedPage(
 
                 Text(
                     text = article.summary,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 9,
+                    maxLines = 8,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = buildString {
-                        append(formatRelativeTime(article.publishedAt))
-
                         article.author
                             ?.takeIf { it.isNotBlank() }
                             ?.let {
-                                append(" | By $it")
+                                append("By $it")
                             }
                     },
+//                    text = buildString {
+//                        append(formatRelativeTime(article.publishedAt))
+//
+//                        article.author
+//                            ?.takeIf { it.isNotBlank() }
+//                            ?.let {
+//                                append(" | By $it")
+//                            }
+//                    },
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.outline,
+                    fontSize = 10.sp,
                 )
             }
 
@@ -169,9 +181,10 @@ fun FeedPage(
                 text = "Swipe for next",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.outline,
+                fontSize = 10.sp,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = 12.dp)
             )
         }
 

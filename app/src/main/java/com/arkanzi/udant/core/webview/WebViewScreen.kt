@@ -1,7 +1,10 @@
 package com.arkanzi.udant.core.webview
 
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -12,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.arkanzi.udant.core.navigation.Navigator
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun WebViewScreen(
     url: String,
@@ -19,12 +23,14 @@ fun WebViewScreen(
     navigator: Navigator
 ) {
     val surfaceColor = MaterialTheme.colorScheme.surface.toArgb()
+    val darkMode = isSystemInDarkTheme()
     val context = LocalContext.current
     val webView = remember {
         WebViewProvider().create(
             context = context,
             config = config,
-            backgroundColor = surfaceColor
+            backgroundColor = surfaceColor,
+            darkMode = darkMode
         )
     }
     LaunchedEffect(url) {

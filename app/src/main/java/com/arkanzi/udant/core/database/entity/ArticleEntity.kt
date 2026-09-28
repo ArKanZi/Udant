@@ -17,19 +17,12 @@ data class ArticleEntity(
     val articleId: Long = 0,
 
     val title: String,
-
     val summary: String,
-
     val author: String?,
-
     val imageUrl: String?,
-
     val sourceName: String,
-
     val articleUrl: String,
-
     val publishedAt: Long,
-
     val category: String,
 
 )

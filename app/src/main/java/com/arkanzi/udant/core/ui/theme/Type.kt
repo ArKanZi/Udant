@@ -1,13 +1,11 @@
 package com.arkanzi.udant.core.ui.theme
 
 import androidx.compose.material3.Typography
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 
 import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.text.googlefonts.Font
-import androidx.compose.ui.unit.sp
 import com.arkanzi.udant.R
 
 val provider = GoogleFont.Provider(
@@ -16,24 +14,26 @@ val provider = GoogleFont.Provider(
     certificates = R.array.com_google_android_gms_fonts_certs
 )
 
+val selectedFont = GoogleFont("Inter")
+
 val bodyFontFamily = FontFamily(
     Font(
-        googleFont = GoogleFont("Quicksand"),
+        googleFont = selectedFont,
         fontProvider = provider,
         weight = FontWeight.Normal
     ),
     Font(
-        googleFont = GoogleFont("Quicksand"),
+        googleFont = selectedFont,
         fontProvider = provider,
         weight = FontWeight.SemiBold
     ),
     Font(
-        googleFont = GoogleFont("Quicksand"),
+        googleFont = selectedFont,
         fontProvider = provider,
         weight = FontWeight.Bold
     ),
     Font(
-        googleFont = GoogleFont("Quicksand"),
+        googleFont = selectedFont,
         fontProvider = provider,
         weight = FontWeight.ExtraBold
     )
@@ -41,22 +41,22 @@ val bodyFontFamily = FontFamily(
 
 val displayFontFamily = FontFamily(
     Font(
-        googleFont = GoogleFont("Quicksand"),
+        googleFont = selectedFont,
         fontProvider = provider,
         weight = FontWeight.Normal
     ),
     Font(
-        googleFont = GoogleFont("Quicksand"),
+        googleFont = selectedFont,
         fontProvider = provider,
         weight = FontWeight.SemiBold
     ),
     Font(
-        googleFont = GoogleFont("Quicksand"),
+        googleFont = selectedFont,
         fontProvider = provider,
         weight = FontWeight.Bold
     ),
     Font(
-        googleFont = GoogleFont("Quicksand"),
+        googleFont = selectedFont,
         fontProvider = provider,
         weight = FontWeight.ExtraBold
     )

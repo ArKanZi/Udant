@@ -1,6 +1,7 @@
 package com.arkanzi.udant.core.navigation
 
 import androidx.navigation3.runtime.NavKey
+import com.arkanzi.udant.feature.library.model.LibraryCollectionTarget
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -12,7 +13,6 @@ data object FeedScreenKey: UdantNavKey
 data object SearchScreenKey: UdantNavKey
 @Serializable
 data object LibraryScreenKey: UdantNavKey
-
 @Serializable
 data class WebViewScreenKey(
     val articleUrl:String,
@@ -20,7 +20,9 @@ data class WebViewScreenKey(
 ): UdantNavKey
 
 @Serializable
-data object SavedScreenKey: UdantNavKey
+data class SavedScreenKey(
+    val target: LibraryCollectionTarget
+): UdantNavKey
 
 @Serializable
 data object DownloadScreenKey: UdantNavKey

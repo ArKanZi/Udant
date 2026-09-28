@@ -12,17 +12,40 @@ import kotlinx.coroutines.flow.Flow
 interface SavedArticleDao {
 
     @Query("""
-        SELECT * 
-        FROM saved_articles 
+        SELECT *
+        FROM saved_articles
         ORDER BY savedAt DESC
     """)
     fun getAllSavedArticles(): Flow<List<SavedArticleEntity>>
 
     @Query("""
-    SELECT *
-    FROM saved_articles
-    WHERE savedArticleId = :savedArticleId
-""")
+        SELECT saved_articles.*
+        FROM saved_articles
+        INNER JOIN article_collection
+            ON saved_articles.savedArticleId = article_collection.savedArticleId
+        WHERE article_collection.collectionId = :collectionId
+        ORDER BY saved_articles.savedAt DESC
+    """)
+    fun getSavedArticlesInCollection(
+        collectionId: Long
+    ): Flow<List<SavedArticleEntity>>
+
+    @Query("""
+        SELECT *
+        FROM saved_articles
+        WHERE savedArticleId NOT IN (
+            SELECT savedArticleId
+            FROM article_collection
+        )
+        ORDER BY savedAt DESC
+    """)
+    fun getDefaultSavedArticles(): Flow<List<SavedArticleEntity>>
+
+    @Query("""
+        SELECT *
+        FROM saved_articles
+        WHERE savedArticleId = :savedArticleId
+    """)
     suspend fun getSavedArticleById(
         savedArticleId: Long
     ): SavedArticleEntity?
@@ -50,62 +73,58 @@ interface SavedArticleDao {
     """)
     suspend fun deleteAllArticles()
 
-
     @Query("""
         SELECT COUNT(*)
         FROM saved_articles
     """)
-    suspend fun getSavedCount(): Int
+    fun getSavedCount(): Flow<Int>
 
     @Query("""
-    SELECT articleUrl
-    FROM saved_articles
-""")
+        SELECT articleUrl
+        FROM saved_articles
+    """)
     fun getSavedUrls(): Flow<List<String>>
 
     @Query("""
-    UPDATE saved_articles
-    SET archiveStatus = :archiveStatus
-    WHERE savedArticleId = :savedArticleId
-""")
+        UPDATE saved_articles
+        SET archiveStatus = :archiveStatus
+        WHERE savedArticleId = :savedArticleId
+    """)
     suspend fun updateArchiveStatus(
         savedArticleId: Long,
         archiveStatus: ArchiveStatus
     )
 
     @Query("""
-    UPDATE saved_articles
-    SET archiveStatus = "COMPLETED",
-        archiveUri = :archiveUri
-    WHERE savedArticleId = :savedArticleId
-""")
+        UPDATE saved_articles
+        SET archiveStatus = "COMPLETED",
+            archiveUri = :archiveUri
+        WHERE savedArticleId = :savedArticleId
+    """)
     suspend fun updateArchiveCompleted(
         savedArticleId: Long,
-        archiveUri:String,
+        archiveUri: String
     )
 
     @Query("""
         UPDATE saved_articles
-    SET archiveStatus = "NOT_ARCHIVED",
-        archiveUri = null
-    WHERE savedArticleId = :savedArticleId
+        SET archiveStatus = "NOT_ARCHIVED",
+            archiveUri = null
+        WHERE savedArticleId = :savedArticleId
     """)
     suspend fun clearArchive(
-        savedArticleId: Long,
+        savedArticleId: Long
     )
 
     @Query("""
-    UPDATE saved_articles
-    SET archiveUri = :archiveUri,
-        archiveStatus = :archiveStatus
-    WHERE savedArticleId = :savedArticleId
-""")
+        UPDATE saved_articles
+        SET archiveUri = :archiveUri,
+            archiveStatus = :archiveStatus
+        WHERE savedArticleId = :savedArticleId
+    """)
     suspend fun updateArchive(
         savedArticleId: Long,
         archiveUri: String?,
         archiveStatus: ArchiveStatus
     )
 }
-
-
-

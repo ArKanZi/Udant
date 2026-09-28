@@ -18,3 +18,22 @@ fun formatRelativeTime(timestamp: Long): String {
         else -> "$months months ago"
     }
 }
+
+fun formatRelativeTimeShort(timestamp: Long): String {
+
+    val diff = System.currentTimeMillis() - timestamp
+
+    val seconds = diff / 1_000
+    val minutes = seconds / 60
+    val hours = minutes / 60
+    val days = hours / 24
+    val months = days / 30
+
+    return when {
+        seconds < 60 -> "${seconds}s"
+        minutes < 60 -> "${minutes}m"
+        hours < 24 -> "${hours}h"
+        days < 30 -> "${days}d"
+        else -> "${months}m"
+    }
+}

@@ -1,5 +1,7 @@
 package com.arkanzi.udant.core.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -12,10 +14,11 @@ import com.arkanzi.udant.core.ui.MainScaffold
 import com.arkanzi.udant.core.webview.WebViewScreen
 import com.arkanzi.udant.feature.feed.ui.FeedScreen
 import com.arkanzi.udant.feature.library.ui.LibraryScreen
-import com.arkanzi.udant.feature.savedArticles.ui.SavedArticleScreen
+import com.arkanzi.udant.feature.library.ui.SavedArticleScreen
 import com.arkanzi.udant.feature.search.ui.SearchScreen
 import com.arkanzi.udant.feature.settings.ui.SettingsScreen
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun AppNavigation(destination: String?, onDestinationConsumed: () -> Unit) {
     val startKey = FeedScreenKey
@@ -37,7 +40,7 @@ fun AppNavigation(destination: String?, onDestinationConsumed: () -> Unit) {
         when (destination) {
 
             "saved" -> {
-                navigator.openSaved()
+                navigator.openSavedArticles()
                 onDestinationConsumed()
             }
         }
@@ -64,7 +67,7 @@ fun AppNavigation(destination: String?, onDestinationConsumed: () -> Unit) {
                 }
 
                 entry <LibraryScreenKey>{
-                    LibraryScreen()
+                    LibraryScreen(navigator = navigator)
                 }
 
                 entry<WebViewScreenKey> {
@@ -72,7 +75,7 @@ fun AppNavigation(destination: String?, onDestinationConsumed: () -> Unit) {
                 }
 
                 entry<SavedScreenKey> {
-                    SavedArticleScreen(navigator = navigator)
+                    SavedArticleScreen(navigator = navigator, target = it.target)
                 }
 
                 entry<DownloadScreenKey> {

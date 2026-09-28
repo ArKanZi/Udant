@@ -37,7 +37,7 @@ import com.arkanzi.udant.core.model.ArchiveStatus
 import com.arkanzi.udant.core.model.Article
 import com.arkanzi.udant.core.navigation.Navigator
 import com.arkanzi.udant.feature.archive.model.ArchiveRequest
-import com.arkanzi.udant.feature.savedArticles.viewmodel.SavedArticlesViewModel
+import com.arkanzi.udant.feature.library.viewmodel.SavedArticlesViewModel
 
 @Composable
 fun SavedArticleScreen(

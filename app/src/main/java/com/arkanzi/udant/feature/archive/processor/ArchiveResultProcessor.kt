@@ -1,10 +1,9 @@
 package com.arkanzi.udant.feature.archive.processor
 
-import com.arkanzi.udant.core.database.entity.DownloadJobEntity
 import com.arkanzi.udant.core.job.download.processor.DownloadResultProcessor
 import com.arkanzi.udant.core.model.ArchiveStatus
 import com.arkanzi.udant.feature.archive.model.ArchiveResultPayload
-import com.arkanzi.udant.feature.savedArticles.repository.SavedArticleRepository
+import com.arkanzi.udant.feature.library.repository.SavedArticleRepository
 import javax.inject.Inject
 
 class ArchiveResultProcessor @Inject constructor(

@@ -2,6 +2,7 @@ package com.arkanzi.udant.core.navigation
 
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import com.arkanzi.udant.feature.library.model.LibraryCollectionTarget
 
 class Navigator(
     private val backStack: NavBackStack<NavKey>
@@ -61,14 +62,14 @@ class Navigator(
         }
     }
 
-    fun openSaved() {
+    fun openSavedArticles(target: LibraryCollectionTarget = LibraryCollectionTarget.Default) {
 
         if (
             backStack.lastOrNull() != SavedScreenKey
         ) {
 
             backStack.add(
-                SavedScreenKey
+                SavedScreenKey(target)
             )
         }
     }
