@@ -4,6 +4,6 @@ sealed interface LibraryCollectionTarget {
     data object Default : LibraryCollectionTarget
 
     data class User(
-        val collectionId: Long
+        val collectionId: String
     ) : LibraryCollectionTarget
 }

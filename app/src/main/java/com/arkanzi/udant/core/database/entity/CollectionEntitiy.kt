@@ -9,14 +9,16 @@ import androidx.room.PrimaryKey
         Index(value = ["name"], unique = true)
     ])
 data class CollectionEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey()
+    val id: String,
 
     val name: String,
 
     val color: Long,
 
     val isPinned: Boolean = false,
+
+    val articleCount: Long = 0,
 
     val sortOrder: Int = 0,
 

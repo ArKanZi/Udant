@@ -14,13 +14,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
-import com.arkanzi.udant.core.model.Collection
-import com.arkanzi.udant.feature.library.model.LibraryCollection
+import com.arkanzi.udant.core.model.CollectionModel
+import com.arkanzi.udant.core.ui.components.ConfirmationDialog
 import com.arkanzi.udant.feature.library.model.LibraryCollectionTarget
 import com.arkanzi.udant.feature.library.ui.components.collection.AddCollectionButton
 import com.arkanzi.udant.feature.library.ui.components.collection.CollectionDialog
@@ -44,12 +45,33 @@ fun CollectionView(
         initialValue = emptyList()
     )
 
+    val defaultCollectionId by viewModel.defaultSaveCollectionId
+        .collectAsStateWithLifecycle(
+            initialValue = null
+        )
+
+    val defaultArticleCount by viewModel.defaultArticleCount.collectAsStateWithLifecycle(
+        initialValue = 0
+    )
+
     val collectionNameExists by
     viewModel.collectionNameExists.collectAsStateWithLifecycle()
 
     var showAddCollectionDialog by rememberSaveable {
         mutableStateOf(false)
     }
+    val now = System.currentTimeMillis()
+
+    val defaultCollection = CollectionModel(
+        id = "default",
+        name = "Default",
+        color = MaterialTheme.colorScheme.primary.toArgb().toLong(),
+        isPinned = false,
+        sortOrder = 0,
+        articleCount = defaultArticleCount,
+        createdAt = now ,
+        updatedAt = now,
+    )
 
     val displayedCollections = getDisplayedCollections(
         collections = collections,
@@ -57,8 +79,12 @@ fun CollectionView(
         order = order
     )
 
-    var editingCollection by rememberSaveable {
-        mutableStateOf<Collection?>(null)
+    var editingCollectionModel by rememberSaveable {
+        mutableStateOf<CollectionModel?>(null)
+    }
+
+    var deleteCollectionModel by rememberSaveable {
+        mutableStateOf<CollectionModel?>(null)
     }
 
     Column(
@@ -77,52 +103,57 @@ fun CollectionView(
                 bottom = 100.dp
             )
         ) {
+            if(defaultArticleCount>0){
+                item {
+                    CollectionItem(
+                        collection = defaultCollection,
+                        defaultCollectionId = defaultCollectionId,
+                        onClick = {
+                            onCollectionClick(
+                                LibraryCollectionTarget.Default
+                            )
+                        },
+                        onSetDefaultClick = {
+                            viewModel.updateDefaultCollection(null)
+                        }
+                    )
+                }
+            }
             items(
                 items = displayedCollections,
-                key = { collection ->
-                    when (collection) {
-                        is LibraryCollection.Default -> "default"
-                        is LibraryCollection.User ->
-                            collection.collection.id
-                    }
-                }
+                key = { it.id }
             ) { collection ->
 
-                when (collection) {
-
-                    is LibraryCollection.Default -> {
                         CollectionItem(
-                            name = "Default",
-                            articleCount = collection.articleCount,
-                            isDefault = true,
-                            onClick = {
-                                onCollectionClick(
-                                    LibraryCollectionTarget.Default
-                                )
-                            }
-                        )
-                    }
-
-                    is LibraryCollection.User -> {
-                        CollectionItem(
-                            name = collection.collection.name,
-                            articleCount = collection.articleCount,
+                            collection = collection,
+                            defaultCollectionId = defaultCollectionId,
                             onClick = {
                                 onCollectionClick(
                                     LibraryCollectionTarget.User(
-                                        collectionId = collection.collection.id
+                                        collectionId = collection.id
                                     )
                                 )
                             },
                             onEditClick = {
-                                editingCollection= collection.collection
+                                editingCollectionModel= collection
                             },
-                            onMoreClick = {
-                                // later
+                            onPinClick = {
+                                viewModel.updatePinCollection(!collection.isPinned,collection)
+                            },
+                            onSetDefaultClick = {
+                                if(defaultCollectionId==collection.id){
+                                viewModel.updateDefaultCollection(null)
+                            }else{
+                                viewModel.updateDefaultCollection(collection.id)
+                            }
+
+                            },
+                            onDeleteClick = {
+                                deleteCollectionModel = collection
                             }
                         )
-                    }
-                }
+
+
             }
 
             item {
@@ -152,18 +183,18 @@ fun CollectionView(
 
     }
 
-    editingCollection?.let { collection ->
+    editingCollectionModel?.let { collection ->
         CollectionDialog(
             title = "Edit Collection",
             initialName = collection.name,
             confirmText = "Update",
             onDismiss = {
-                editingCollection = null
+                editingCollectionModel = null
                 viewModel.resetCollectionNameCheck()
             },
             onConfirm = { newName ->
-                viewModel.editCollection(newName, collection)
-                editingCollection = null
+                viewModel.updateNameCollection(newName, collection)
+                editingCollectionModel = null
             },
             collectionNameExists = collectionNameExists,
             onResetNameCheck = {
@@ -174,21 +205,32 @@ fun CollectionView(
             }
         )
     }
+
+    deleteCollectionModel?.let { collection ->
+        ConfirmationDialog(
+            title = "Delete Collection",
+            message = "Are you sure you want to delete this collection?",
+            confirmText = "Delete",
+            onDismiss = {
+                deleteCollectionModel = null
+            },
+            onConfirm = {
+                viewModel.deleteCollection(collection)
+                deleteCollectionModel = null
+            },
+        )
+    }
 }
 
 private fun getDisplayedCollections(
-    collections: List<LibraryCollection>,
+    collections: List<CollectionModel>,
     query: String,
     order: LibraryOrder
-): List<LibraryCollection> {
-    val defaultCollection =
-        collections.filterIsInstance<LibraryCollection.Default>()
-
+): List<CollectionModel> {
     val userCollections =
         collections
-            .filterIsInstance<LibraryCollection.User>()
             .filter {
-                it.collection.name.contains(
+                it.name.contains(
                     query.trim(),
                     ignoreCase = true
                 )
@@ -196,20 +238,20 @@ private fun getDisplayedCollections(
 
     val sortedCollections = when (order) {
         LibraryOrder.LATEST ->
-            userCollections.sortedByDescending { it.collection.createdAt }
+            userCollections.sortedByDescending { it.createdAt }
 
         LibraryOrder.OLDEST ->
-            userCollections.sortedBy { it.collection.createdAt }
+            userCollections.sortedBy { it.createdAt }
 
         LibraryOrder.A_TO_Z ->
-            userCollections.sortedBy { it.collection.name }
+            userCollections.sortedBy { it.name }
 
         LibraryOrder.Z_TO_A ->
-            userCollections.sortedByDescending { it.collection.name }
+            userCollections.sortedByDescending { it.name }
 
         LibraryOrder.RECENT ->
-            userCollections.sortedByDescending { it.collection.updatedAt }
+            userCollections.sortedByDescending { it.updatedAt }
     }
 
-    return defaultCollection + sortedCollections
+    return sortedCollections
 }

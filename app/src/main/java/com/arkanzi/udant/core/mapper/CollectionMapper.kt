@@ -1,23 +1,24 @@
 package com.arkanzi.udant.core.mapper
 
 import com.arkanzi.udant.core.database.entity.CollectionEntity
-import com.arkanzi.udant.core.model.Collection
+import com.arkanzi.udant.core.model.CollectionModel
 
 
-fun CollectionEntity.toModel(): Collection {
+fun CollectionEntity.toModel(): CollectionModel {
 
-    return Collection(
+    return CollectionModel(
         id = id,
         name = name,
         color = color,
         isPinned = isPinned,
         sortOrder = sortOrder,
+        articleCount = articleCount,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
 }
 
-fun Collection.toEntity(): CollectionEntity {
+fun CollectionModel.toEntity(): CollectionEntity {
 
     return CollectionEntity(
         id = id,
@@ -25,6 +26,7 @@ fun Collection.toEntity(): CollectionEntity {
         color = color,
         isPinned = isPinned,
         sortOrder = sortOrder,
+        articleCount = articleCount,
         createdAt = createdAt,
         updatedAt = updatedAt
     )

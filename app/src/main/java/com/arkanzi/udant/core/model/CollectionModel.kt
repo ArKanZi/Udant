@@ -1,9 +1,9 @@
 package com.arkanzi.udant.core.model
 
 
-data class Collection(
+data class CollectionModel(
 
-    val id: Long = 0,
+    val id: String,
 
     val name: String,
 
@@ -12,6 +12,8 @@ data class Collection(
     val isPinned: Boolean = false,
 
     val sortOrder: Int = 0,
+
+    val articleCount: Long = 0,
 
     val createdAt: Long,
 

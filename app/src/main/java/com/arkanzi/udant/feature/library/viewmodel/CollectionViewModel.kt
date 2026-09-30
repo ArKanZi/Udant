@@ -2,7 +2,8 @@ package com.arkanzi.udant.feature.library.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.arkanzi.udant.core.model.Collection
+import com.arkanzi.udant.core.model.CollectionModel
+import com.arkanzi.udant.core.preference.AppPreferenceRepository
 import com.arkanzi.udant.feature.library.usecase.collection.CollectionApplicationService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -16,10 +17,22 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel
 class CollectionViewModel @Inject constructor(
-    private val collectionApplicationService : CollectionApplicationService
+    private val collectionApplicationService : CollectionApplicationService,
+    private val appPreferenceRepository: AppPreferenceRepository
 ) : ViewModel() {
 
     val collections = collectionApplicationService.getCollections()
+
+    val defaultArticleCount = collectionApplicationService.getDefaultArticleCount()
+
+    val defaultSaveCollectionId =
+        appPreferenceRepository.getDefaultSaveCollectionId()
+
+    fun setDefaultSaveCollection(id: String?) {
+        viewModelScope.launch {
+            appPreferenceRepository.saveDefaultSaveCollectionId(id)
+        }
+    }
     private var nameCheckJob: Job? = null
 
     private val _collectionNameExists = MutableStateFlow(false)
@@ -48,9 +61,32 @@ class CollectionViewModel @Inject constructor(
         }
     }
 
-    fun editCollection(name:String,collection: Collection){
+    fun updateNameCollection(name:String, collectionModel: CollectionModel){
         viewModelScope.launch {
-            collectionApplicationService.editCollection(name,collection)
+            collectionApplicationService.updateCollectionName(name,collectionModel)
+        }
+    }
+
+    fun updatePinCollection(isPinned: Boolean, collectionModel: CollectionModel){
+        viewModelScope.launch {
+            collectionApplicationService.updateCollectionPinned(isPinned = isPinned,collectionModel)
+        }
+    }
+
+    fun updateDefaultCollection(collectionModelId: String?){
+        viewModelScope.launch {
+            setDefaultSaveCollection(collectionModelId)
+        }
+    }
+
+
+    fun deleteCollection(collectionModel: CollectionModel){
+        viewModelScope.launch {
+            val result = collectionApplicationService.deleteCollection(collectionModel)
+            if (result) {
+                setDefaultSaveCollection(null)
+            }
+
         }
     }
 }

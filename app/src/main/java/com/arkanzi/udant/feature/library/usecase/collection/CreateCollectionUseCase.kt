@@ -1,6 +1,11 @@
 package com.arkanzi.udant.feature.library.usecase.collection
 
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.toColorLong
+import com.arkanzi.udant.core.model.CollectionModel
 import com.arkanzi.udant.feature.library.repository.LibraryRepository
+import com.arkanzi.udant.feature.library.ui.components.collection.generateCollectionColor
+import java.util.UUID
 import javax.inject.Inject
 
 class CreateCollectionUseCase @Inject constructor(
@@ -17,8 +22,19 @@ class CreateCollectionUseCase @Inject constructor(
             return false
         }
 
-        repository.createCollection(normalizedName)
+        val now = System.currentTimeMillis()
 
-        return true
+        val collectionModel = CollectionModel(
+            id = UUID.randomUUID().toString(),
+            name = name,
+            color = generateCollectionColor().toArgb().toLong(),
+            isPinned = false,
+            createdAt = now,
+            updatedAt = now
+        )
+
+        return repository.insertCollection(collectionModel)
+
+
     }
 }

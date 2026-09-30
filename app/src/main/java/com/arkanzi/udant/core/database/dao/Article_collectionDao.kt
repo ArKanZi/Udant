@@ -29,7 +29,7 @@ interface ArticleCollectionDao {
     """)
     suspend fun removeFromCollection(
         savedArticleId: Long,
-        collectionId: Long
+        collectionId: String
     )
 
     @Query("""
@@ -40,7 +40,7 @@ interface ArticleCollectionDao {
     """)
     suspend fun setPinned(
         savedArticleId: Long,
-        collectionId: Long,
+        collectionId: String,
         isPinned: Boolean
     )
 
@@ -52,7 +52,7 @@ interface ArticleCollectionDao {
     """)
     suspend fun isPinned(
         savedArticleId: Long,
-        collectionId: Long
+        collectionId: String
     ): Boolean?
 
     @Query("""
@@ -64,7 +64,7 @@ interface ArticleCollectionDao {
     ORDER BY saved_articles.publishedAt DESC
 """)
     fun getArticlesInCollection(
-        collectionId: Long
+        collectionId: String
     ): Flow<List<SavedArticleEntity>>
 
     @Query("""
@@ -84,7 +84,7 @@ interface ArticleCollectionDao {
     WHERE collectionId = :collectionId
 """)
     fun getArticleCount(
-        collectionId: Long
+        collectionId: String
     ): Flow<Int>
 
     @Query("""

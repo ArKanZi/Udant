@@ -27,6 +27,22 @@ class AppPreferenceRepository @Inject constructor(
         }
     }
 
+    suspend fun saveDefaultSaveCollectionId(
+        collectionId: String?
+    ) {
+        dataStore.edit { preferences ->
+            if (collectionId == null) {
+                preferences.remove(
+                    PreferenceKeys.DEFAULT_SAVE_COLLECTION_ID
+                )
+            } else {
+                preferences[
+                    PreferenceKeys.DEFAULT_SAVE_COLLECTION_ID
+                ] = collectionId
+            }
+        }
+    }
+
     fun getPreferences(): Flow<AppPreference> {
 
         return dataStore.data.map { preferences ->
@@ -36,15 +52,25 @@ class AppPreferenceRepository @Inject constructor(
                 archiveFolderUri =
                     preferences[
                         PreferenceKeys.ARCHIVE_FOLDER_URI
+                    ],
+                defaultSaveCollectionId =
+                    preferences[
+                        PreferenceKeys.DEFAULT_SAVE_COLLECTION_ID
                     ]
             )
         }
     }
 
-    fun getArchiveFolderUri(): Flow<String?> {
-
+    fun getDefaultSaveCollectionId(): Flow<String?> {
         return dataStore.data.map { preferences ->
+            preferences[
+                PreferenceKeys.DEFAULT_SAVE_COLLECTION_ID
+            ]
+        }
+    }
 
+    fun getArchiveFolderUri(): Flow<String?> {
+        return dataStore.data.map { preferences ->
             preferences[
                 PreferenceKeys.ARCHIVE_FOLDER_URI
             ]

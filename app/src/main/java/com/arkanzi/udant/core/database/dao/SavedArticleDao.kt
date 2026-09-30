@@ -27,7 +27,7 @@ interface SavedArticleDao {
         ORDER BY saved_articles.savedAt DESC
     """)
     fun getSavedArticlesInCollection(
-        collectionId: Long
+        collectionId: String
     ): Flow<List<SavedArticleEntity>>
 
     @Query("""

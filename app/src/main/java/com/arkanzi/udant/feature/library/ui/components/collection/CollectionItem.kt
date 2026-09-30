@@ -13,11 +13,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,24 +30,27 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import com.arkanzi.udant.core.model.CollectionModel
 import com.arkanzi.udant.core.ui.icons.folderIcon
 
 @OptIn(ExperimentalStdlibApi::class)
 @Composable
 fun CollectionItem(
     modifier: Modifier = Modifier,
-    name: String,
-    articleCount: Int,
-    isDefault: Boolean = false,
+    collection: CollectionModel,
+    defaultCollectionId: String? = null,
     onClick: () -> Unit,
     onEditClick: (() -> Unit)? = null,
-    onMoreClick: (() -> Unit)? = null
+    onPinClick: (() -> Unit)? = null,
+    onSetDefaultClick: (() -> Unit)? = null,
+    onDeleteClick: (() -> Unit)? = null,
 ) {
-    val folderColor = generateCollectionColor()
+    val folderColor = Color(collection.color)
     val fillColor = folderColor.copy(alpha = 0.95f)
 
     val folderIconLocal = remember(fillColor, folderColor) {
@@ -118,20 +119,20 @@ fun CollectionItem(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = name,
+                    text = collection.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
 
                 Text(
-                    text = "$articleCount articles",
+                    text = "${collection.articleCount} articles",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             // Trailing content
-            if (isDefault) {
+            if (defaultCollectionId==collection.id || (collection.id =="default" && defaultCollectionId == null) ) {
                 Surface(
                     shape = RoundedCornerShape(50.dp),
                     color = MaterialTheme.colorScheme.primaryContainer
@@ -144,15 +145,6 @@ fun CollectionItem(
                         ),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            } else {
-                IconButton(
-                    onClick = { onMoreClick?.invoke() }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More options"
                     )
                 }
             }
@@ -179,26 +171,40 @@ fun CollectionItem(
             )
 
             DropdownMenuItem(
-                text = { Text("Pin") },
+                text = { Text(if (collection.isPinned) "Unpin" else "Pin") },
                 onClick = {
                     showMenu = false
-                    // pin
+                    onPinClick?.invoke()
                 }
             )
 
-            DropdownMenuItem(
-                text = { Text("Set as Default") },
-                onClick = {
-                    showMenu = false
-                    // set default
-                }
-            )
+            if (collection.id != "default" || defaultCollectionId != null) {
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            if (
+                                collection.id != "default" &&
+                                defaultCollectionId == collection.id
+                            ) {
+                                "Remove as Default"
+                            } else {
+                                "Set as Default"
+                            }
+                        )
+                    },
+                    onClick = {
+                        showMenu = false
+                        onSetDefaultClick?.invoke()
+                    }
+                )
+            }
 
             DropdownMenuItem(
                 text = { Text("Delete") },
                 onClick = {
                     showMenu = false
-                    // delete
+                    onDeleteClick?.invoke()
+
                 }
             )
         }
@@ -209,11 +215,17 @@ fun CollectionItem(
 @Preview
 @Composable
 fun CollectionItemPreview() {
+    val now = System.currentTimeMillis()
     CollectionItem(
-        name = "Sample Collection",
-        articleCount = 10,
-        isDefault = true,
-        onClick = {},
-        onMoreClick = {}
+        collection = CollectionModel(
+            id = "default",
+            name = "Sample Collection",
+            color = MaterialTheme.colorScheme.primary.toArgb().toLong(),
+            isPinned = false,
+            createdAt = now,
+            articleCount = 20,
+            updatedAt = now
+        ),
+        onClick = {}
     )
 }

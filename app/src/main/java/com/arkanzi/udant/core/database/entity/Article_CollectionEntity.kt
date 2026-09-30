@@ -8,6 +8,6 @@ import androidx.room.Entity
 )
 data class ArticleCollectionCrossRef(
     val savedArticleId: Long,
-    val collectionId: Long,
+    val collectionId: String,
     val isPinned: Boolean = false
 )
