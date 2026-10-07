@@ -29,3 +29,5 @@ local.properties
 
 #tree
 project_tree.txt
+
+app/src/main/java/com/arkanzi/udant/extension/thetimesofindia/ToiConfig.kt
