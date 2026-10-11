@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,7 +29,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arkanzi.udant.core.model.ArchiveStatus
 import com.arkanzi.udant.core.model.Article
 import com.arkanzi.udant.core.navigation.Navigator
+import com.arkanzi.udant.core.ui.components.ArticleCollectionDialog
+import com.arkanzi.udant.core.ui.components.ConfirmationDialog
 import com.arkanzi.udant.core.ui.components.SearchBar
+import com.arkanzi.udant.feature.archive.model.ArchiveRequest
 import com.arkanzi.udant.feature.library.model.LibraryCollectionTarget
 import com.arkanzi.udant.feature.library.ui.components.shared_components.ArticleCard
 import com.arkanzi.udant.feature.library.viewmodel.SavedArticleOrder
@@ -46,16 +50,25 @@ fun SavedArticleScreen(
     LaunchedEffect(target) {
         viewModel.setCollectionTarget(target)
     }
-    val articles by viewModel
-        .articles
-        .collectAsStateWithLifecycle()
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var query by remember {
         mutableStateOf("")
     }
 
+    var deleteFromAllCollections by remember {
+        mutableStateOf(false)
+    }
+
+    var removeDownloadedArchive by remember {
+        mutableStateOf(false)
+    }
+
     Column(
-        modifier = modifier.fillMaxSize().padding(12.dp)
+        modifier = modifier
+            .fillMaxSize()
+            .padding(12.dp)
     ) {
 
         SearchBar(
@@ -64,7 +77,7 @@ fun SavedArticleScreen(
             placeHolder = "Search your Articles...",
             onSearchClick = {},
 
-        )
+            )
 
         Spacer(modifier = Modifier.size(10.dp))
 
@@ -75,7 +88,7 @@ fun SavedArticleScreen(
 
             SortOption(
                 label = "Sort By",
-                value = viewModel.sortBy.displayName(),
+                value = uiState.sortBy.displayName(),
                 options = SavedArticleSort.entries.map {
                     it.displayName()
                 },
@@ -91,7 +104,7 @@ fun SavedArticleScreen(
 
             SortOption(
                 label = "Order By",
-                value = viewModel.orderBy.displayName(),
+                value = uiState.orderBy.displayName(),
                 options = SavedArticleOrder.entries.map {
                     it.displayName()
                 },
@@ -108,7 +121,7 @@ fun SavedArticleScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        if (articles.isEmpty()) {
+        if (uiState.articles.isEmpty()) {
 
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -122,19 +135,121 @@ fun SavedArticleScreen(
         } else {
 
             SavedArticleList(
-                articles = articles,
-                viewModel = viewModel,
-                navigator = navigator
+                articles = uiState.articles,
+                navigator = navigator,
+                onDownloadClick = {
+                        article ->
+                    viewModel.archiveSavedArticle(
+                        ArchiveRequest(
+                            savedArticleId = article.articleId,
+                            articleTitle = article.title,
+                            articleUrl = article.articleUrl
+                        )
+                    )
+                },
+                onMoveClick = {viewModel.openCollectionDialog(it)},
+                onPinClick = {},
+                onDeleteClick = { article ->
+                    viewModel.deleteSavedArticle(
+                        article = article,
+                        collectionId = when (target) {
+                            LibraryCollectionTarget.Default -> null
+                            is LibraryCollectionTarget.User -> target.collectionId
+                        }
+                    )
+                },
+                onArchiveDeleteClick = {
+                    viewModel.deleteArchive(articleId = it.articleId)
+                }
             )
         }
+    }
+    if (uiState.showCollectionDialog) {
+        ArticleCollectionDialog(
+            collections = uiState.collections,
+            selectedCollectionIds = uiState.selectedCollectionIds,
+            isUncategorized = uiState.isUncategorized,
+
+            onCollectionToggle = viewModel::toggleCollection,
+
+            onUncategorizedToggle =
+                viewModel::toggleUncategorized,
+
+            onConfirm =
+                viewModel::confirmCollectionSelection,
+
+            onDismiss =
+                viewModel::dismissCollectionDialog
+        )
+    }
+
+    if (uiState.showDeleteDialog) {
+        ConfirmationDialog(
+            title = "Delete Article",
+            message = "Are you sure you want to delete this article?",
+        additionalOption = {
+            Column {
+                uiState.collectionCountToDelete?.let {
+                    if (it > 1) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = deleteFromAllCollections,
+                                onCheckedChange = {
+                                    deleteFromAllCollections = it
+                                }
+                            )
+                            Text("Delete from all collections")
+                        }
+                    }
+                }
+
+                uiState.articleToDelete?.let { article ->
+                    if (
+                        article.archiveStatus == ArchiveStatus.COMPLETED &&
+                        article.archiveUri != null
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = removeDownloadedArchive,
+                                onCheckedChange = {
+                                    removeDownloadedArchive = it
+                                }
+                            )
+                            Text("Remove downloaded archive")
+                        }
+                    }
+                }
+            }
+        },
+            confirmText = "Delete",
+            onConfirm = {
+                viewModel.confirmDeleteSavedArticle(
+                    deleteFromAllCollections = deleteFromAllCollections,
+                    removeDownloadedArchive = removeDownloadedArchive
+                )
+                deleteFromAllCollections = false
+            },
+            onDismiss = {
+                viewModel.cancelDeleteSavedArticle()
+                deleteFromAllCollections = false
+            }
+        )
     }
 }
 
 @Composable
 private fun SavedArticleList(
     articles: List<Article>,
-    viewModel: SavedArticlesViewModel,
-    navigator: Navigator
+    navigator: Navigator,
+    onDownloadClick: (Article) -> Unit,
+    onMoveClick: (Article) -> Unit,
+    onPinClick: () -> Unit,
+    onDeleteClick: (Article) -> Unit,
+    onArchiveDeleteClick: (Article) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -168,12 +283,15 @@ private fun SavedArticleList(
                         )
                     }
                 },
+                onDownloadClick = { onDownloadClick(article) },
+                onMoveClick = {onMoveClick(article)},
+                onPinClick = onPinClick,
+                onDeleteClick = { onDeleteClick(article) },
+                onArchiveDeleteClick = {onArchiveDeleteClick(article)}
 
-                onMoreClick = {
-                    // Article actions will go here.
-                    // Remove / delete archive / etc.
-                }
             )
         }
+
     }
+
 }

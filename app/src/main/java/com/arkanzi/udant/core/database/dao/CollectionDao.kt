@@ -16,7 +16,7 @@ interface CollectionDao {
     fun getAllCollections(): Flow<List<CollectionEntity>>
 
     @Query("SELECT * FROM collection WHERE id = :id")
-    suspend fun getCollection(id: Long): CollectionEntity?
+    suspend fun getCollection(id: String): CollectionEntity?
 
     @Query("""
     SELECT EXISTS(
@@ -37,6 +37,13 @@ interface CollectionDao {
 )
 """)
     fun getDefaultArticleCount(): Flow<Long>
+
+    @Query("""
+    SELECT COUNT(*)
+    FROM article_collection
+    WHERE collectionId = :collectionId
+""")
+    fun getArticleCount(collectionId: String): Flow<Long>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCollection(collection: CollectionEntity): Long

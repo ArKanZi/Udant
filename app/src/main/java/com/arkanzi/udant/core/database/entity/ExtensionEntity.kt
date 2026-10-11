@@ -8,4 +8,5 @@ data class ExtensionEntity(
     @PrimaryKey
     val id: String,
     val name: String,
+    val version: String
 )

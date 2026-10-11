@@ -1,6 +1,7 @@
 package com.arkanzi.udant.feature.feed.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,7 +40,8 @@ fun FeedPage(
     modifier: Modifier= Modifier,
     isSaved: Boolean,
     onArticleClick: (String) -> Unit,
-    onSaveClick: () -> Unit
+    onSaveClick: () -> Unit,
+    onLongClick: () -> Unit
 ) {
 
     Column(
@@ -112,10 +114,10 @@ fun FeedPage(
 
                             tint = MaterialTheme.colorScheme.outline,
 
-                            modifier = Modifier
-                                .clickable(
-                                    onClick = onSaveClick
-                                )
+                            modifier = Modifier.combinedClickable(
+                                onClick = onSaveClick,
+                                onLongClick = onLongClick
+                            )
                                 .size(16.dp)
                         )
                         Spacer(modifier = Modifier.size(12.dp))
@@ -199,12 +201,13 @@ fun FeedScreenPreview() {
 
         FeedPage(
             article = Article(
-                articleId = 1,
+                articleId = "",
                 title = "Sample Article Title That Might Be Long and Need Several Lines to Display Correct",
                 summary = "This is a sample summary for the article. It provides a brief overview of what the article is about and should be long enough to test the max lines property of the text component.",
-                imageUrl = "https://example.com/image.jpg",
+                imageUrl = "https://static.toiimg.com/thumb/msid-134854660,width-400,resizemode-4/134854660.jpg",
                 articleUrl = "https://example.com/article",
                 publishedAt = System.currentTimeMillis(),
+                sourceId = "",
                 sourceName = "Tech News",
                 author = "John DOE",
                 category = "World",
@@ -212,7 +215,8 @@ fun FeedScreenPreview() {
             ),
             onArticleClick = {},
             isSaved = true,
-            onSaveClick = {}
+            onSaveClick = {},
+            onLongClick = {}
         )
     }
 }

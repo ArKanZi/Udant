@@ -1,5 +1,6 @@
 package com.arkanzi.udant.core.ui.components
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -11,6 +12,7 @@ fun ConfirmationDialog(
     message: String,
     confirmText: String = "Confirm",
     dismissText: String = "Cancel",
+    additionalOption: @Composable () -> Unit = {},
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -20,7 +22,11 @@ fun ConfirmationDialog(
             Text(text = title)
         },
         text = {
-            Text(text = message)
+            Column {
+                Text(text = message)
+
+                additionalOption()
+            }
         },
         confirmButton = {
             TextButton(

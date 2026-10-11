@@ -3,6 +3,7 @@ package com.arkanzi.udant.core.database.entity
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import com.arkanzi.udant.core.model.CategoryType
 
 @Entity(
     tableName = "feed_categories",
@@ -19,5 +20,6 @@ data class FeedCategoryEntity(
     @PrimaryKey
     val id: String,
     val name: String,
+    val categoryType: CategoryType,
     val extensionId: String
 )

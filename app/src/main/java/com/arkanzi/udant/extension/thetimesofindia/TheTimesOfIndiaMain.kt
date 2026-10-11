@@ -2,67 +2,58 @@ package com.arkanzi.udant.extension.thetimesofindia
 
 import android.util.Log
 import com.arkanzi.udant.core.model.Article
-import com.arkanzi.udant.core.model.FeedCategory
+import com.arkanzi.udant.core.model.ExtensionCategory
+import com.arkanzi.udant.core.model.FeedResult
+import com.arkanzi.udant.core.model.UdantExtension
 import com.arkanzi.udant.extension.thetimesofindia.enricher.ArticleEnricher
 import javax.inject.Inject
 
 class TheTimesOfIndiaMain @Inject constructor(
     private val rssFeedDataSource: RssFeedDataSource,
-    private val articleEnricher: ArticleEnricher
-) {
-    private val feedSources = toiSourceDetails
-    private var currentFeedIndex = 0
+    private val articleEnricher: ArticleEnricher,
+    private val toiApi: ToiApi
+) : UdantExtension {
 
-    fun getCategories(): List<FeedCategory> {
-        return feedSources.map {
-            FeedCategory(
-                name = it.category,
-            )
+    override val name = "The Times of India"
+
+    override val developerName = "Arkanzi"
+
+    override val version = "1.0.0"
+    override val baseUrl = "https://timesofindia.indiatimes.com"
+
+
+    override fun getCategories(): List<ExtensionCategory> {
+        return categories
+    }
+
+    override suspend fun fetchHome(page: Int): FeedResult {
+        return toiApi.fetchHomeArticles(ToiConfig.BASE_URL+myFeed.url)
+    }
+
+    override suspend fun fetchCategory(
+        categoryName: String,
+        page: Int
+    ): FeedResult {
+
+        val category = categories.first {
+            it.name == categoryName
         }
+    Log.d("category",category.toString())
+        return toiApi.fetchHomeArticles(feedCategoryUrl(category.url, page = page))
     }
 
-    suspend fun fetch(): List<Article> {
-
-        val source = feedSources[currentFeedIndex]
-
-        val articles = rssFeedDataSource
-            .fetchArticles(source.sourceUrl)
-            .map { article ->
-                article.copy(
-                    sourceName = source.sourceName,
-                    category = source.category
-                )
-            }
-
-        currentFeedIndex++
-
-        return articles
-    }
-
-    suspend fun fetchCategory(category: String): List<Article> {
-        val source= feedSources.first { it.category == category }
-        val article = rssFeedDataSource
-            .fetchArticles(source.sourceUrl)
-            .map { article ->
-                article.copy(
-                    sourceName = source.sourceName,
-                    category = source.category
-                )
-            }
-        return article
-    }
-
-    suspend fun enrich(
+    override suspend fun enrich(
         article: Article
     ): Article {
-        try {
-            return articleEnricher.enrich(article)
+        return try {
+            articleEnricher.enrich(article)
         } catch (exception: Exception) {
             Log.e(
                 "ENRICH_ERROR",
                 exception.stackTraceToString()
             )
+
+            article
         }
-        return article
     }
 }

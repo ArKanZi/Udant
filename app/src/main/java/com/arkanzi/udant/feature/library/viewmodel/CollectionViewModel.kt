@@ -2,12 +2,14 @@ package com.arkanzi.udant.feature.library.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.arkanzi.udant.core.database.dao.ArticleCollectionDao
 import com.arkanzi.udant.core.model.CollectionModel
 import com.arkanzi.udant.core.preference.AppPreferenceRepository
 import com.arkanzi.udant.feature.library.usecase.collection.CollectionApplicationService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -33,6 +35,7 @@ class CollectionViewModel @Inject constructor(
             appPreferenceRepository.saveDefaultSaveCollectionId(id)
         }
     }
+
     private var nameCheckJob: Job? = null
 
     private val _collectionNameExists = MutableStateFlow(false)
@@ -81,6 +84,7 @@ class CollectionViewModel @Inject constructor(
 
 
     fun deleteCollection(collectionModel: CollectionModel){
+
         viewModelScope.launch {
             val result = collectionApplicationService.deleteCollection(collectionModel)
             if (result) {

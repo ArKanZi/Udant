@@ -1,80 +1,39 @@
 package com.arkanzi.udant.core.extension
 
-import android.util.Log
-import com.arkanzi.udant.core.database.dao.ExtensionDao
-import com.arkanzi.udant.core.database.dao.FeedCategoryDao
-import com.arkanzi.udant.core.database.entity.ExtensionEntity
-import com.arkanzi.udant.core.database.entity.FeedCategoryEntity
-import com.arkanzi.udant.core.mapper.toEntity
-import com.arkanzi.udant.core.util.toGenerateId
-import com.arkanzi.udant.extension.theindianexpress.TheIndianExpress
-import com.arkanzi.udant.extension.thetimesofindia.TheTimesOfIndiaMain
-import kotlinx.coroutines.flow.first
-import javax.inject.Inject
 
+import com.arkanzi.udant.core.database.dao.FeedCategoryDao
+import com.arkanzi.udant.core.model.UdantExtension
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
 class ExtensionManager @Inject constructor(
-    private val theTimesOfIndiaMain: TheTimesOfIndiaMain,
-    private val theIndianExpress: TheIndianExpress,
-    private val extensionDao: ExtensionDao,
+    private val extensions: Set<@JvmSuppressWildcards UdantExtension>,
+    private val extensionRegistrar: ExtensionRegistrar,
+    private val categorySynchronizer: CategorySynchronizer,
     private val feedCategoryDao: FeedCategoryDao,
 
-) {
+    ) {
 
-    suspend fun syncExtensions() {
-        val extension = mutableListOf<ExtensionEntity>()
-        extension.add(
-            ExtensionEntity(
-                id = "udant",
-                name = "Udant"
-            )
-        )
-        extension.add(
-            ExtensionEntity(
-                id = theTimesOfIndiaMain::class.java.simpleName,
-                name = "The Times of India"
-            )
-        )
-        extension.add(
-            ExtensionEntity(
-                id = theIndianExpress::class.java.simpleName,
-                name = "The Indian Express"
-            )
-        )
-        extensionDao.upsertExtensions(extension)
-        syncCategories()
-    }
+    private val loadedExtensions = mutableMapOf<String, UdantExtension>()
 
-    suspend fun syncCategories() {
-        val extensions = extensionDao.getExtensions().first()
-
-        val categories = mutableListOf(
-            FeedCategoryEntity(
-                id = ("Udant"+"My Feed").toGenerateId(),
-                name = "My Feed",
-                extensionId = "udant"
-            )
-        )
+    suspend fun start() {
 
         extensions.forEach { extension ->
-            val extensionCategories = when (extension.id) {
-                theTimesOfIndiaMain::class.java.simpleName ->
-                    theTimesOfIndiaMain.getCategories()
-
-                theIndianExpress::class.java.simpleName ->
-                    theIndianExpress.getCategories()
-
-                else -> emptyList()
-            }
-
-            categories.addAll(
-                extensionCategories.map {
-                    it.toEntity(extension.id)
-                }
-            )
+            val extensionId = extensionRegistrar.upsertExtensions(extension)
+            loadedExtensions[extensionId] = extension
+            syncCategories(extension, extensionId)
         }
+    }
 
-        Log.d("ExtensionManager", "Final categories: $categories")
+    fun getExtension(extensionId: String): UdantExtension? {
+        return loadedExtensions[extensionId]
+    }
 
+
+
+    suspend fun syncCategories(extension: UdantExtension, extensionId: String) {
+        val categories = categorySynchronizer.synchronize(extension,extensionId)
         feedCategoryDao.upsertCategories(categories)
     }
 }

@@ -52,6 +52,7 @@ class RssFeedDataSource @Inject constructor(
                     return@withContext feed.entries.map { entry ->
 
                         Article(
+                            articleId = "",
                             title = entry.title ?: "",
 
                             summary = Jsoup
@@ -74,8 +75,8 @@ class RssFeedDataSource @Inject constructor(
 
                             publishedAt =
                                 entry.publishedDate?.time
-                                    ?: System.currentTimeMillis()
-
+                                    ?: System.currentTimeMillis(),
+                            sourceId = "",
                         )
                     }
                 }

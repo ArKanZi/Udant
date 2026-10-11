@@ -7,7 +7,7 @@ import androidx.room.Entity
     primaryKeys = ["savedArticleId", "collectionId"]
 )
 data class ArticleCollectionCrossRef(
-    val savedArticleId: Long,
+    val savedArticleId: String,
     val collectionId: String,
     val isPinned: Boolean = false
 )

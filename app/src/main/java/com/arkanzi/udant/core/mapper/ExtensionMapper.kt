@@ -7,6 +7,7 @@ fun ExtensionEntity.toModel(): Extension {
     return Extension(
         id = id,
         name = name,
+        version = version
     )
 }
 
@@ -14,5 +15,6 @@ fun Extension.toEntity(): ExtensionEntity {
     return ExtensionEntity(
         id = id,
         name = name,
+        version = version
     )
 }

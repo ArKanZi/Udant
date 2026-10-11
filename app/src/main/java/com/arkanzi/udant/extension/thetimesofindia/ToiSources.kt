@@ -6,16 +6,14 @@ val toiSourceDetails = listOf(
 
     SourceDetail(
         sourceName = "The Times of India",
-        category = "Top Stories",
-        sourceUrl = "https://timesofindia.indiatimes.com/rssfeedstopstories.cms"
-    ),
-
-    SourceDetail(
-        sourceName = "The Times of India",
         category = "Most Recent",
         sourceUrl = "https://timesofindia.indiatimes.com/rssfeedmostrecent.cms"
     ),
-
+    SourceDetail(
+        sourceName = "The Times of India",
+        category = "Top Stories",
+        sourceUrl = "https://timesofindia.indiatimes.com/rssfeedstopstories.cms"
+    ),
     SourceDetail(
         sourceName = "The Times of India",
         category = "India",

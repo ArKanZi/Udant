@@ -68,7 +68,7 @@ dependencies {
     // coil
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
-    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.coil.gif)
 
     // Rome
     implementation(libs.rome.core)
@@ -96,6 +96,7 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.ui)

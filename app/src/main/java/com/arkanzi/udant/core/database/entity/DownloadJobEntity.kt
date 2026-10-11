@@ -11,7 +11,7 @@ data class DownloadJobEntity(
     @PrimaryKey
     val jobId: String,
 
-    val referenceId: Long,
+    val referenceId: String,
 
     val title:String,
 

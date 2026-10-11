@@ -9,62 +9,44 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.arkanzi.udant.core.model.FeedCategory
 import com.arkanzi.udant.core.ui.components.TextButtonItem
+import com.arkanzi.udant.feature.feed.model.FeedTarget
+import com.rometools.rome.feed.atom.Feed
 
 
 @Composable
 fun CategoryBar(
-    categories: List<String>,
-    selectedCategory: String,
-    onCategorySelected: (String) -> Unit
-){
-
+    categories: List<FeedCategory>,
+    selectedTarget: FeedTarget?,
+    onTargetSelected: (FeedTarget) -> Unit
+) {
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
-    ){
+    ) {
         LazyRow {
-            items(categories){ category ->
+            item {
                 TextButtonItem(
-                    itemName = category,
-                    selected = category == selectedCategory,
+                    itemName = "My Feed",
+                    selected = selectedTarget is FeedTarget.All,
                     action = {
-                        onCategorySelected(category)
+                        onTargetSelected(FeedTarget.All)
+                    }
+                )
+            }
+            items(categories) { category ->
+                TextButtonItem(
+                    itemName = category.name,
+                    selected = selectedTarget == FeedTarget.Category(category.id),
+                    action = {
+                        onTargetSelected(
+                            FeedTarget.Category(category.id)
+                        )
                     }
                 )
             }
         }
     }
-
-
 }
 
-@Preview(showBackground= true)
-@Composable
-fun CategoryBarPreview() {
-    CategoryBar(
-        listOf(
-            "My Feed",
-            "Top Stories",
-            "Most Recent",
-            "India",
-            "World",
-            "Business",
-            "Sports",
-            "Cricket",
-            "Tech",
-            "Science",
-            "Environment",
-            "Entertainment",
-            "Life & Style",
-            "Education",
-            "US",
-            "Most Read",
-            "Most Shared",
-            "Most Commented",
-        ),
-        selectedCategory = "My Feed",
-        onCategorySelected = {}
-    )
-}

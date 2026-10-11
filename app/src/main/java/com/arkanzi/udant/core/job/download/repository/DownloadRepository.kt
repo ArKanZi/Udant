@@ -46,7 +46,7 @@ class DownloadRepository @Inject constructor(
     }
 
     suspend fun getDownloadJobByReferenceId(
-        referenceId: Long,
+        referenceId: String,
         jobType: DownloadType
     ): DownloadJobEntity? {
         return dao.getDownloadJobByReferenceId(referenceId,jobType)

@@ -10,7 +10,7 @@ class DeleteArchiveUseCase @Inject constructor(
     private val archiveRepository: ArchiveRepository,
     private val storageManager: StorageManager
 ) {
-    suspend operator fun invoke(savedArticleId: Long) {
+    suspend operator fun invoke(savedArticleId: String) {
         val archiveFolderUri =
             archiveRepository
                 .getArchiveFolderUri()

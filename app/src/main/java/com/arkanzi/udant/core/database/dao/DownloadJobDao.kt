@@ -75,7 +75,7 @@ interface DownloadJobDao {
     LIMIT 1
 """)
     suspend fun getDownloadJobByReferenceId(
-        referenceId: Long,
+        referenceId: String,
         jobType: DownloadType
     ): DownloadJobEntity?
 

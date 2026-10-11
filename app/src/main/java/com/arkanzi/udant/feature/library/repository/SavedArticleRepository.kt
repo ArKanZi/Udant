@@ -1,8 +1,12 @@
 package com.arkanzi.udant.feature.library.repository
 
+import androidx.room.withTransaction
+import com.arkanzi.udant.core.database.UdantDatabase
+import com.arkanzi.udant.core.database.dao.ArticleCollectionDao
 import com.arkanzi.udant.core.database.dao.SavedArticleDao
+import com.arkanzi.udant.core.database.entity.ArticleCollectionCrossRef
+import com.arkanzi.udant.core.database.entity.SavedArticleEntity
 import com.arkanzi.udant.core.mapper.toModel
-import com.arkanzi.udant.core.mapper.toSavedArticleEntity
 import com.arkanzi.udant.core.model.ArchiveStatus
 import com.arkanzi.udant.core.model.Article
 import com.arkanzi.udant.feature.library.model.LibraryCollectionTarget
@@ -14,7 +18,10 @@ import javax.inject.Singleton
 @Singleton
 class SavedArticleRepository @Inject constructor(
 
-    private val savedArticleDao: SavedArticleDao
+    private val savedArticleDao: SavedArticleDao,
+    private val articleCollectionDao: ArticleCollectionDao,
+    private val collectionDao: ArticleCollectionDao,
+    private val database: UdantDatabase
 
 ) {
 
@@ -41,22 +48,112 @@ class SavedArticleRepository @Inject constructor(
         }
     }
 
-    suspend fun saveArticle(
-        article: Article
+    suspend fun insertArticle(
+        savedArticle: SavedArticleEntity
     ) {
 
         savedArticleDao.insertArticle(
-            article.toSavedArticleEntity()
+            savedArticle
         )
     }
 
-    suspend fun removeSavedArticle(
-        articleUrl: String
-    ) {
+    suspend fun insertSavedArticle(
+        article: SavedArticleEntity,
+        collectionId: String?
+    ){
+        database.withTransaction {
+            savedArticleDao.insertArticle(article)
 
-        savedArticleDao.deleteArticleByUrl(
-            articleUrl = articleUrl
-        )
+            if (collectionId != null) {
+                articleCollectionDao.insert(
+                    ArticleCollectionCrossRef(
+                        savedArticleId = article.savedArticleId,
+                        collectionId = collectionId
+                    )
+                )
+                collectionDao.incrementArticleCount(collectionId)
+            }
+
+        }
+
+    }
+
+    suspend fun deleteSavedArticleFromAllCollection(article: Article) {
+        database.withTransaction {
+
+            val collectionIds =
+                articleCollectionDao
+                    .getCollectionIdsBySavedArticleId(article.articleId)
+
+            collectionIds.forEach { collectionId ->
+
+                articleCollectionDao.removeFromCollection(
+                    savedArticleId = article.articleId,
+                    collectionId = collectionId
+                )
+
+                collectionDao.decrementArticleCount(collectionId)
+            }
+
+            savedArticleDao.deleteArticleById(article.articleId)
+        }
+    }
+
+    suspend fun deleteSavedArticleFromCollection(article: Article,collectionId: String) {
+        database.withTransaction {
+                articleCollectionDao.removeFromCollection(
+                    savedArticleId = article.articleId,
+                    collectionId = collectionId
+                )
+
+                collectionDao.decrementArticleCount(collectionId)
+        }
+    }
+
+    suspend fun updateCollections(
+        articleId: String,
+        collectionIds: List<String>
+    ) {
+        database.withTransaction {
+
+            val oldCollectionIds =
+                articleCollectionDao
+                    .getCollectionIdsBySavedArticleId(articleId)
+                    .toSet()
+
+            val newCollectionIds =
+                collectionIds.toSet()
+
+            oldCollectionIds
+                .subtract(newCollectionIds)
+                .forEach { collectionId ->
+
+                    articleCollectionDao.removeFromCollection(
+                        savedArticleId = articleId,
+                        collectionId = collectionId
+                    )
+
+                    collectionDao.decrementArticleCount(
+                        collectionId
+                    )
+                }
+
+            newCollectionIds
+                .subtract(oldCollectionIds)
+                .forEach { collectionId ->
+
+                    articleCollectionDao.insert(
+                        ArticleCollectionCrossRef(
+                            savedArticleId = articleId,
+                            collectionId = collectionId
+                        )
+                    )
+
+                    collectionDao.incrementArticleCount(
+                        collectionId
+                    )
+                }
+        }
     }
 
     fun getSavedUrls(): Flow<Set<String>> {
@@ -69,7 +166,7 @@ class SavedArticleRepository @Inject constructor(
     }
 
     suspend fun updateArchive(
-        savedArticleId: Long,
+        savedArticleId: String,
         archiveUri: String?,
         archiveStatus: ArchiveStatus
     ) {

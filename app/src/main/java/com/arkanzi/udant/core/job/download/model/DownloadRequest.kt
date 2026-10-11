@@ -6,13 +6,13 @@ sealed interface DownloadRequest<T : DownloadPayload> {
 
     val title: String
     val downloadType: DownloadType
-    val referenceId: Long
+    val referenceId: String
     val payload: T
 
     data class Execute<T : DownloadPayload>(
         override val title: String,
         override val downloadType: DownloadType,
-        override val referenceId: Long,
+        override val referenceId: String,
         override val payload: T
     ) : DownloadRequest<T>
 }

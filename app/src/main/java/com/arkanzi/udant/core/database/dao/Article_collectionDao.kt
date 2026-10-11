@@ -17,6 +17,20 @@ interface ArticleCollectionDao {
         articleCollection: ArticleCollectionCrossRef
     )
 
+    @Query("""
+    UPDATE collection
+    SET articleCount = articleCount + 1
+    WHERE id = :collectionId
+""")
+    suspend fun incrementArticleCount(collectionId: String)
+
+    @Query("""
+    UPDATE collection
+    SET articleCount = articleCount - 1
+    WHERE id = :collectionId
+""")
+    suspend fun decrementArticleCount(collectionId: String)
+
     @Delete
     suspend fun delete(
         articleCollection: ArticleCollectionCrossRef
@@ -28,8 +42,16 @@ interface ArticleCollectionDao {
         AND collectionId = :collectionId
     """)
     suspend fun removeFromCollection(
-        savedArticleId: Long,
+        savedArticleId: String,
         collectionId: String
+    )
+
+    @Query("""
+    DELETE FROM article_collection
+    WHERE savedArticleId = :savedArticleId
+""")
+    suspend fun removeFromAllCollections(
+        savedArticleId: String
     )
 
     @Query("""
@@ -39,7 +61,7 @@ interface ArticleCollectionDao {
         AND collectionId = :collectionId
     """)
     suspend fun setPinned(
-        savedArticleId: Long,
+        savedArticleId: String,
         collectionId: String,
         isPinned: Boolean
     )
@@ -51,7 +73,7 @@ interface ArticleCollectionDao {
         AND collectionId = :collectionId
     """)
     suspend fun isPinned(
-        savedArticleId: Long,
+        savedArticleId: String,
         collectionId: String
     ): Boolean?
 
@@ -96,6 +118,24 @@ interface ArticleCollectionDao {
     )
 """)
     fun getDefaultArticleCount(): Flow<Int>
+
+    @Query("""
+    SELECT COUNT(*)
+    FROM article_collection
+    WHERE savedArticleId = :savedArticleId
+""")
+    suspend fun getArticleCountInCollection(
+        savedArticleId: String
+    ): Int
+
+    @Query("""
+    SELECT collectionId
+    FROM article_collection
+    WHERE savedArticleId = :savedArticleId
+""")
+    suspend fun getCollectionIdsBySavedArticleId(
+        savedArticleId: String
+    ): List<String>
 
 
 }

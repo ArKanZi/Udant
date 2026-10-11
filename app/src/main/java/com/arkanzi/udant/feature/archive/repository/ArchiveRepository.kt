@@ -42,34 +42,34 @@ class ArchiveRepository@Inject constructor(
         }
     }
 
-    private suspend fun setNotArchived(savedArticleId: Long){
+    private suspend fun setNotArchived(savedArticleId: String){
         savedArticleDao.updateArchiveStatus(
             savedArticleId = savedArticleId,
             archiveStatus = ArchiveStatus.NOT_ARCHIVED
         )
     }
-    private suspend fun setQueued(savedArticleId: Long) {
+    private suspend fun setQueued(savedArticleId: String) {
 
         savedArticleDao.updateArchiveStatus(
             savedArticleId = savedArticleId,
             archiveStatus = ArchiveStatus.QUEUED
         )
     }
-    private suspend fun setArchiving(savedArticleId: Long) {
+    private suspend fun setArchiving(savedArticleId: String) {
 
         savedArticleDao.updateArchiveStatus(
             savedArticleId = savedArticleId,
             archiveStatus = ArchiveStatus.ARCHIVING
         )
     }
-    private suspend fun setFailed(savedArticleId: Long) {
+    private suspend fun setFailed(savedArticleId: String) {
 
         savedArticleDao.updateArchiveStatus(
             savedArticleId = savedArticleId,
             archiveStatus = ArchiveStatus.FAILED
         )
     }
-    private suspend fun setCompleted(savedArticleId: Long, archiveUri: String) {
+    private suspend fun setCompleted(savedArticleId: String, archiveUri: String) {
 
         savedArticleDao.updateArchiveCompleted(
             savedArticleId = savedArticleId,
@@ -77,14 +77,14 @@ class ArchiveRepository@Inject constructor(
         )
     }
 
-    suspend fun deleteArchive(savedArticleId: Long){
+    suspend fun deleteArchive(savedArticleId: String){
             savedArticleDao.clearArchive(
                 savedArticleId
             )
     }
 
     suspend fun getSavedArticleById(
-        savedArticleId: Long
+        savedArticleId: String
     ) = savedArticleDao.getSavedArticleById(
         savedArticleId = savedArticleId
     )

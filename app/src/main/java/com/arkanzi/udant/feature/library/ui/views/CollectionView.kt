@@ -64,7 +64,7 @@ fun CollectionView(
 
     val defaultCollection = CollectionModel(
         id = "default",
-        name = "Default",
+        name = "Uncategorized",
         color = MaterialTheme.colorScheme.primary.toArgb().toLong(),
         isPinned = false,
         sortOrder = 0,

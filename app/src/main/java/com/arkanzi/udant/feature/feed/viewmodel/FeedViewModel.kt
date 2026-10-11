@@ -4,13 +4,17 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arkanzi.udant.core.model.Article
+import com.arkanzi.udant.feature.feed.model.FeedTarget
 import com.arkanzi.udant.feature.feed.model.FeedUiState
 import com.arkanzi.udant.feature.feed.repository.FeedRepository
 import com.arkanzi.udant.feature.library.repository.SavedArticleRepository
+import com.arkanzi.udant.feature.library.usecase.collection.CollectionApplicationService
+import com.arkanzi.udant.feature.library.usecase.savedArticles.SavedArticleApplicationService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -19,30 +23,49 @@ import javax.inject.Inject
 class FeedViewModel @Inject constructor(
 
     private val feedRepository: FeedRepository,
-    private val savedArticleRepository: SavedArticleRepository
+    private val savedArticleRepository: SavedArticleRepository,
+    private val savedArticleUseCase: SavedArticleApplicationService,
+    private val collectionUseCase: CollectionApplicationService,
 
 ) : ViewModel() {
 
-    private val _selectedCategory = MutableStateFlow("My Feed")
-    val selectedCategory = _selectedCategory.asStateFlow()
+    // Feed Target
 
-    fun selectCategory(category: String) {
-        _selectedCategory.value = category
+    private val _selectedTarget =
+        MutableStateFlow<FeedTarget>(FeedTarget.All)
 
-        val hasArticles = latestArticles.any {
-            it.category == category
-        }
+    val selectedTarget =
+        _selectedTarget.asStateFlow()
 
-        if (category != "My Feed" && !hasArticles) {
-            viewModelScope.launch {
-                feedRepository.fetchCategory(category)
+    fun selectTarget(target: FeedTarget) {
+        _selectedTarget.value = target
+
+        when (target) {
+            FeedTarget.All -> {
+                updateVisibleFeed(latestArticles)
+            }
+
+            is FeedTarget.Category -> {
+                viewModelScope.launch {
+                val category = _uiState.value.categories
+                    .firstOrNull { it.id == target.categoryId }
+                    ?: return@launch
+
+                val extensionIds = feedRepository
+                    .getExtensionIds()
+                    .first()
+
+                    feedRepository.fetchCategory(
+                        extensionIds = extensionIds,
+                    categoryName = category.name
+                    )
+                }
             }
         }
-
-        updateVisibleFeed(latestArticles)
     }
 
-    // latest articles
+    // Latest Articles
+
     private var latestArticles =
         emptyList<Article>()
 
@@ -73,9 +96,12 @@ class FeedViewModel @Inject constructor(
 
     init {
         observeCategories()
+        observeCollections()
         observeSavedUrls()
         startupRefresh()
     }
+
+    // Categories
 
     private fun observeCategories() {
         viewModelScope.launch {
@@ -91,30 +117,45 @@ class FeedViewModel @Inject constructor(
         }
     }
 
+    // Collections
+
+    private fun observeCollections() {
+        viewModelScope.launch {
+            collectionUseCase
+                .getCollections()
+                .collectLatest { collections ->
+                    _uiState.update {
+                        it.copy(
+                            collections = collections
+                        )
+                    }
+                }
+        }
+    }
+
     // Feed Startup
 
     private fun startupRefresh() {
-
         viewModelScope.launch {
 
-            val result =
-                feedRepository
-                    .fetchFirstFeedAndReplaceCache()
+            val extensionIds = feedRepository
+                .getExtensionIds()
+                .first()
+
+            feedRepository.fetchFirstFeedAndReplaceCache(extensionIds)
+
             observeArticles()
-            _uiState.value =
-                _uiState.value.copy(
-                    isLoading = false,
-                    error = result.exceptionOrNull()?.message
-                )
+
+            _uiState.update {
+                it.copy(isLoading = false)
+            }
         }
     }
 
     // Feed Observation
 
     private fun observeArticles() {
-
         viewModelScope.launch {
-
             feedRepository
                 .getArticles()
                 .collectLatest { articles ->
@@ -156,8 +197,22 @@ class FeedViewModel @Inject constructor(
                 articleMap[url]
             }
             .filter { article ->
-                _selectedCategory.value == "My Feed" ||
-                        article.category == _selectedCategory.value
+
+
+                when (val target = _selectedTarget.value) {
+
+                    FeedTarget.All -> true
+
+                    is FeedTarget.Category -> {
+
+                        val category = _uiState.value.categories
+                            .firstOrNull {
+                                it.id == target.categoryId
+                            }
+
+                        article.category == category?.name?.lowercase()
+                    }
+                }
             }
 
         _uiState.update {
@@ -172,7 +227,6 @@ class FeedViewModel @Inject constructor(
     fun fetchNextFeed() {
 
         if (_uiState.value.isLoading) return
-
         if (_uiState.value.isLoadingMore) return
 
         _uiState.update {
@@ -180,24 +234,37 @@ class FeedViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-
             try {
 
-                val result =
-                    feedRepository.fetchNextFeed()
+                when (val target = _selectedTarget.value) {
 
-                result.onFailure {
+                    FeedTarget.All -> {
+                        val extensionIds = feedRepository
+                            .getExtensionIds()
+                            .first()
 
-                    Log.e(
-                        "FETCH_FEED_ERROR",
-                        result.exceptionOrNull().toString()
-                    )
+                        feedRepository.fetchNextFeed(
+                            extensionIds = extensionIds
+                        )
+                    }
+
+                    is FeedTarget.Category -> {
+                        val category = _uiState.value.categories
+                            .firstOrNull { it.id == target.categoryId }
+                            ?: return@launch
+
+                        feedRepository.fetchCategory(
+                            extensionIds = listOf(category.extensionId),
+                            categoryName = category.name
+                        )
+                    }
                 }
 
             } finally {
-
                 _uiState.update {
-                    it.copy(isLoadingMore = false)
+                    it.copy(
+                        isLoadingMore = false
+                    )
                 }
             }
         }
@@ -207,19 +274,18 @@ class FeedViewModel @Inject constructor(
 
         visibleOrder.clear()
 
-        updateVisibleFeed(latestArticles)
+        updateVisibleFeed(
+            latestArticles
+        )
     }
 
     // Saved Articles
 
     private fun observeSavedUrls() {
-
         viewModelScope.launch {
-
             savedArticleRepository
                 .getSavedUrls()
                 .collectLatest { urls ->
-
                     _savedUrls.value = urls
                 }
         }
@@ -228,22 +294,167 @@ class FeedViewModel @Inject constructor(
     fun saveArticle(
         article: Article
     ) {
-
         viewModelScope.launch {
-
-            savedArticleRepository
-                .saveArticle(article)
+            savedArticleUseCase.insertArticle(article)
         }
     }
 
-    fun removeSavedArticle(
-        articleUrl: String
+    fun deleteSavedArticle(
+        article: Article
     ) {
+        viewModelScope.launch {
+
+            val collectionIds =
+                savedArticleUseCase
+                    .getCollectionIds(article.articleId)
+
+            if (collectionIds.size > 1) {
+
+                _uiState.update {
+                    it.copy(
+                        showDeleteDialog = true,
+                        articleToDelete = article
+                    )
+                }
+
+            } else {
+
+                savedArticleUseCase
+                    .deleteSavedArticleFromAllCollection(article)
+            }
+        }
+    }
+
+    fun openCollectionDialog(
+        article: Article
+    ) {
+        viewModelScope.launch {
+
+            val collectionIds =
+                savedArticleUseCase
+                    .getCollectionIds(article.articleId)
+
+            _uiState.update {
+                it.copy(
+                    showCollectionDialog = true,
+                    collectionDialogArticle = article,
+                    selectedCollectionIds = collectionIds.toSet(),
+                    isUncategorized = collectionIds.isEmpty()
+                )
+            }
+        }
+    }
+
+    fun toggleCollection(
+        collectionId: String
+    ) {
+        _uiState.update { state ->
+
+            val selected =
+                state.selectedCollectionIds.toMutableSet()
+
+            if (collectionId in selected) {
+                selected.remove(collectionId)
+            } else {
+                selected.add(collectionId)
+            }
+
+            state.copy(
+                selectedCollectionIds = selected,
+                isUncategorized = false
+            )
+        }
+    }
+
+    fun toggleUncategorized() {
+        _uiState.update { state ->
+
+            if (state.isUncategorized) {
+
+                state.copy(
+                    isUncategorized = false
+                )
+
+            } else {
+
+                state.copy(
+                    isUncategorized = true,
+                    selectedCollectionIds = emptySet()
+                )
+            }
+        }
+    }
+
+    fun dismissCollectionDialog() {
+        _uiState.update {
+            it.copy(
+                showCollectionDialog = false,
+                collectionDialogArticle = null,
+                selectedCollectionIds = emptySet(),
+                isUncategorized = false
+            )
+        }
+    }
+
+    fun confirmCollectionSelection() {
+
+        val state = _uiState.value
+        val article = state.collectionDialogArticle
+            ?: return
 
         viewModelScope.launch {
 
-            savedArticleRepository
-                .removeSavedArticle(articleUrl)
+            if (state.selectedCollectionIds.isNotEmpty()) {
+
+                savedArticleUseCase.updateCollections(
+                    articleId = article.articleId,
+                    collectionIds =
+                        state.selectedCollectionIds.toList()
+                )
+
+            } else if (state.isUncategorized) {
+
+                savedArticleUseCase.updateCollections(
+                    articleId = article.articleId,
+                    collectionIds = emptyList()
+                )
+
+            } else {
+
+                savedArticleUseCase
+                    .deleteSavedArticleFromAllCollection(article)
+            }
+
+            dismissCollectionDialog()
+        }
+    }
+
+    fun confirmDeleteSavedArticle() {
+
+        viewModelScope.launch {
+
+            val article =
+                _uiState.value.articleToDelete
+                    ?: return@launch
+
+            savedArticleUseCase
+                .deleteSavedArticleFromAllCollection(article)
+
+            _uiState.update {
+                it.copy(
+                    showDeleteDialog = false,
+                    articleToDelete = null
+                )
+            }
+        }
+    }
+
+    fun cancelDeleteSavedArticle() {
+        _uiState.update {
+            it.copy(
+                showDeleteDialog = false,
+                articleToDelete = null
+            )
         }
     }
 }

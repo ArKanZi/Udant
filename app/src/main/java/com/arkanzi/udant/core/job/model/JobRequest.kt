@@ -6,13 +6,13 @@ sealed interface JobRequest<T : JobPayload> {
     val title: String
 
     val jobType: JobType
-    val referenceId:Long
+    val referenceId:String
     val payload: T
 
     data class Execute<T : JobPayload>(
         override val title: String,
         override val jobType: JobType,
-        override val referenceId: Long,
+        override val referenceId: String,
         override val payload: T
     ) : JobRequest<T>
 }

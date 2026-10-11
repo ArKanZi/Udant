@@ -2,7 +2,7 @@ package com.arkanzi.udant.core.model
 
 data class Article(
 
-    val articleId: Long = 0,
+    val articleId: String,
 
     val title: String,
 
@@ -13,6 +13,8 @@ data class Article(
     val articleUrl: String,
 
     val publishedAt: Long,
+
+    val sourceId: String,
 
     val sourceName: String,
 

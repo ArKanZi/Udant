@@ -16,8 +16,8 @@ import com.arkanzi.udant.core.model.ArchiveStatus
 )
 data class SavedArticleEntity(
 
-    @PrimaryKey(autoGenerate = true)
-    val savedArticleId: Long = 0,
+    @PrimaryKey
+    val savedArticleId: String,
 
     val title: String,
 
@@ -26,6 +26,8 @@ data class SavedArticleEntity(
     val author: String?,
 
     val imageUrl: String?,
+
+    val sourceId: String,
 
     val sourceName: String,
 

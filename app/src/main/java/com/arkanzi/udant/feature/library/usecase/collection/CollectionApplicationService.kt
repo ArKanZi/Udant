@@ -27,6 +27,8 @@ class CollectionApplicationService @Inject constructor(
         return repository.getDefaultArticleCount()
     }
 
+
+
     suspend fun createCollection(name: String) {
         createCollectionUseCase(name.trim())
     }

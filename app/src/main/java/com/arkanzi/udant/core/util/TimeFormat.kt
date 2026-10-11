@@ -34,6 +34,6 @@ fun formatRelativeTimeShort(timestamp: Long): String {
         minutes < 60 -> "${minutes}m"
         hours < 24 -> "${hours}h"
         days < 30 -> "${days}d"
-        else -> "${months}m"
+        else -> "${months}mo"
     }
 }

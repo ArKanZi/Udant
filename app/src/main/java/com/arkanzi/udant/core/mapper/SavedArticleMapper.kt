@@ -11,6 +11,7 @@ fun SavedArticleEntity.toModel(): Article {
         summary = summary,
         author = author,
         imageUrl = imageUrl,
+        sourceId = sourceId,
         sourceName = sourceName,
         articleUrl = articleUrl,
         publishedAt = publishedAt,
@@ -24,17 +25,20 @@ fun SavedArticleEntity.toModel(): Article {
 fun Article.toSavedArticleEntity(): SavedArticleEntity {
 
     return SavedArticleEntity(
+        savedArticleId = articleId,
         title = title,
         summary = summary,
         author = author,
         imageUrl = imageUrl,
+        sourceId = sourceId,
         sourceName = sourceName,
         articleUrl = articleUrl,
         publishedAt = publishedAt,
         category = category,
         savedAt = System.currentTimeMillis(),
         archiveStatus = archiveStatus,
-        archiveUri = archiveUri
+        archiveUri = archiveUri,
+
     )
 }
 

@@ -1,6 +1,7 @@
 package com.arkanzi.udant.core.database.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -47,13 +48,13 @@ interface SavedArticleDao {
         WHERE savedArticleId = :savedArticleId
     """)
     suspend fun getSavedArticleById(
-        savedArticleId: Long
+        savedArticleId: String
     ): SavedArticleEntity?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertArticle(
         article: SavedArticleEntity
-    )
+    ): Long
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertArticles(
@@ -68,10 +69,21 @@ interface SavedArticleDao {
         articleUrl: String
     )
 
+    @Delete
+    suspend fun deleteArticle(savedArticle: SavedArticleEntity): Int
+
     @Query("""
         DELETE FROM saved_articles
     """)
     suspend fun deleteAllArticles()
+
+    @Query("""
+    DELETE FROM saved_articles
+    WHERE savedArticleId = :savedArticleId
+""")
+    suspend fun deleteArticleById(
+        savedArticleId: String
+    )
 
     @Query("""
         SELECT COUNT(*)
@@ -91,7 +103,7 @@ interface SavedArticleDao {
         WHERE savedArticleId = :savedArticleId
     """)
     suspend fun updateArchiveStatus(
-        savedArticleId: Long,
+        savedArticleId: String,
         archiveStatus: ArchiveStatus
     )
 
@@ -102,7 +114,7 @@ interface SavedArticleDao {
         WHERE savedArticleId = :savedArticleId
     """)
     suspend fun updateArchiveCompleted(
-        savedArticleId: Long,
+        savedArticleId: String,
         archiveUri: String
     )
 
@@ -113,7 +125,7 @@ interface SavedArticleDao {
         WHERE savedArticleId = :savedArticleId
     """)
     suspend fun clearArchive(
-        savedArticleId: Long
+        savedArticleId: String
     )
 
     @Query("""
@@ -123,7 +135,7 @@ interface SavedArticleDao {
         WHERE savedArticleId = :savedArticleId
     """)
     suspend fun updateArchive(
-        savedArticleId: Long,
+        savedArticleId: String,
         archiveUri: String?,
         archiveStatus: ArchiveStatus
     )

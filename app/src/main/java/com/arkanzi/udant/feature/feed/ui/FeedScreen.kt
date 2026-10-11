@@ -26,6 +26,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.arkanzi.udant.core.navigation.FeedScreenKey
 import com.arkanzi.udant.core.navigation.Navigator
+import com.arkanzi.udant.core.ui.components.ArticleCollectionDialog
+import com.arkanzi.udant.core.ui.components.ConfirmationDialog
 import com.arkanzi.udant.feature.feed.ui.components.CategoryBar
 import com.arkanzi.udant.feature.feed.ui.components.FeedPage
 import com.arkanzi.udant.feature.feed.viewmodel.FeedViewModel
@@ -40,7 +42,7 @@ fun FeedScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
+    val selectedTarget by viewModel.selectedTarget.collectAsStateWithLifecycle()
 
     val pagerState = rememberPagerState(
         pageCount = { uiState.articles.size }
@@ -80,13 +82,15 @@ fun FeedScreen(
     ) {
         if(uiState.categories.size !=1){
             CategoryBar(
-                categories = uiState.categories.map { it.name },
-                selectedCategory = selectedCategory,
-                onCategorySelected = { category ->
-                    viewModel.selectCategory(category)
+                categories = uiState.categories,
+                selectedTarget = selectedTarget,
+                onTargetSelected = { target ->
+                    viewModel.selectTarget(target)
+
                     scope.launch {
                         pagerState.scrollToPage(0)
-                    }}
+                    }
+                }
             )
         }
         when {
@@ -149,14 +153,17 @@ fun FeedScreen(
 
                                 if (article.articleUrl in savedUrls) {
 
-                                    viewModel.removeSavedArticle(
-                                        article.articleUrl
+                                    viewModel.deleteSavedArticle(
+                                        article
                                     )
 
                                 } else {
 
                                     viewModel.saveArticle(article)
                                 }
+                            },
+                            onLongClick = {
+                                viewModel.openCollectionDialog(article)
                             }
                         )
                     }
@@ -177,6 +184,40 @@ fun FeedScreen(
                 strokeWidth = 2.dp,
 
                 color = Color.White
+            )
+        }
+
+        if (uiState.showCollectionDialog) {
+            ArticleCollectionDialog(
+                collections = uiState.collections,
+                selectedCollectionIds = uiState.selectedCollectionIds,
+                isUncategorized = uiState.isUncategorized,
+
+                onCollectionToggle = viewModel::toggleCollection,
+
+                onUncategorizedToggle =
+                    viewModel::toggleUncategorized,
+
+                onConfirm =
+                    viewModel::confirmCollectionSelection,
+
+                onDismiss =
+                    viewModel::dismissCollectionDialog
+            )
+        }
+
+        if (uiState.showDeleteDialog) {
+            ConfirmationDialog(
+                title = "Remove article?",
+                message = "This article is saved in multiple collections. Do you want to remove it from all collections?",
+                confirmText = "Remove",
+                dismissText = "Cancel",
+                onConfirm = {
+                    viewModel.confirmDeleteSavedArticle()
+                },
+                onDismiss = {
+                    viewModel.cancelDeleteSavedArticle()
+                }
             )
         }
     }
